@@ -224,6 +224,33 @@ and [Snakemake's best practices](https://snakemake.readthedocs.io/en/stable/snak
 - Docstrings follow numpydoc. `pixi run lint` checks the scripts with ruff and
   `numpydoc lint`. Neither tool parses `.smk` files.
 
+## Known issues
+
+These legacy bugs stay to keep outputs identical to the production results.
+A fix changes outputs.
+
+- `haplotype_caller` passes the raw FREEMIX from the `.selfSM` as
+  `-contamination`. WARP passes FREEMIX divided by
+  `contamination_underestimation_factor` (0.75). Here the factor only scales the
+  value that `check_contamination.py` logs.
+- `check_contamination.py` never checks that the `.selfSM` has one row. WARP's
+  check sits inside its row loop. This pipeline's copy had it after the loop,
+  where its counter was always 1. An empty `.selfSM` fails with a Python
+  traceback.
+- `check_contamination.py` takes the VerifyBamID prefix with
+  `rstrip(".selfSM")`, which strips trailing characters, not the suffix. With
+  the `.preBqsr.selfSM` name it stops at the `r` of `preBqsr`.
+- `unmapped_bam.py` builds one read group from the first R1 header. Every read
+  gets it, even when a FASTQ mixes lanes or flowcells. The header MUST hold 8
+  colon-separated fields. The library is always `MOHD-<sample>`.
+- `unmapped_bam_to_aligned` writes the aligned BAM to
+  `<tmp_dir>/<sample>.aligned.bam`. Two runs of one sample with the same
+  `tmp_dir` share that path. A failed job leaves the file behind.
+- `base_recalibration` declares the haplotype database as an input but never
+  reads it. A change to that file reruns BQSR and everything downstream.
+- `calculate_readgroup_checksum` passes `INPUT= <bam>` and `OUTPUT= <md5>`, a
+  legacy Picard syntax, kept verbatim.
+
 ## References
 
 Behera, Sairam, Severine Catreux, Massimiliano Rossi, et al. 2024. “Comprehensive Genome Analysis and Variant Detection at Scale Using DRAGEN.” Nature Biotechnology 43 (7): 1177–91. https://doi.org/10.1038/s41587-024-02382-1.

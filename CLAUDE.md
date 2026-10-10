@@ -42,7 +42,7 @@ pixi run snakemake --profile profiles/slurm
 - Picard scratch goes to `picard_tmp_dir`, never `/tmp`. Picard fails on a `noexec` `/tmp`.
 - `* attempt` in `profiles/slurm/config.yaml` is intentional. JVM heaps follow `mem_mb`, so a retry also doubles them.
 - `set-threads` sets `OMP_NUM_THREADS` to the job's threads. Before the port it was 1.
-- `reference_index` takes the FASTA as `ancient()`. An index older than the FASTA stays. A regenerated `.dict` would change BAM `@SQ` lines.
+- `reference_index` takes the FASTA as `ancient()`. Existing index files stay even when the FASTA is newer. A regenerated `.dict` would change BAM `@SQ` lines.
 - Resources MUST be flat values. Never derive `mem_mb` or `runtime` from input size.
 - A dry run with the SLURM profile defaults to `--cores 1` and shows every `{threads}` as 1. Pass `--cores 104`.
 - CLI `--set-threads` replaces the profile's whole mapping. Pass every rule.
