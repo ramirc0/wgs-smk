@@ -6,7 +6,6 @@ import uuid
 from box import Box
 import polars as pl
 import subprocess
-import math
 import pickle
 from pathlib import Path
 
@@ -59,10 +58,6 @@ with open(SEQUENCE_GROUPS_PATH, "r") as tsv_file:
     lines = tsv_file.readlines()
     NUM_SEQUENCE_GROUPS = len(lines)
 
-num_samples = metadata.height
-SPLIT_INTERVAL_SCATTER_COUNT = int(math.ceil(num_samples * config.split_interval_list.scatter_count_factor))
-# TODO: Is it 2.5 for the scatter count scale factor or 0.15?
-
 #########################
 ### end of common.smk ###
 #########################
@@ -86,8 +81,6 @@ include: "rules/calculate_readgroup_checksum.smk"
 include: "rules/convert_to_cram.smk"
 include: "rules/check_prevalidation.smk"
 include: "rules/validate_sam_file.smk"
-# include: "rules/collect_wgs_metrics.smk"
-# include: "rules/collect_raw_wgs_metrics.smk"
 include: "rules/calibrate_dragen_str_model.smk"
 include: "rules/scatter_interval_list.smk"
 include: "rules/haplotype_caller.smk"
@@ -138,8 +131,6 @@ rule all:
             sample=SAMPLES
         ),
         expand(f"{config.results_dir}/validate_sam_file/{{sample}}.validation_report", sample=SAMPLES),
-        # expand(f"{config.results_dir}/collect_wgs_metrics/{{sample}}.wgs_metrics", sample=SAMPLES),
-        # expand(f"{config.results_dir}/collect_raw_wgs_metrics/{{sample}}.raw_wgs_metrics", sample=SAMPLES),
         expand(f"{config.results_dir}/calibrate_dragen_str_model/{{sample}}.dragstr", sample=SAMPLES),
         expand(
             f"{config.results_dir}/scatter_interval_list/temp_{{scatter:04d}}_of_{config.scatter_interval_list.scatter_count}/{{scatter}}scattered.interval_list",

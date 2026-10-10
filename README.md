@@ -94,15 +94,6 @@ scatter_interval_list:
 - `scatter_interval_list.break_bands_at_multiples_of`: Break bands at multiples of this value when scattering intervals. Default is `100000`.
 
 ```yaml
-split_interval_list:
-  scatter_count_factor: 2.5
-  scatter_mode: "BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW"
-```
-
-- `split_interval_list.scatter_count_factor`: The scatter count for the split interval list is computed as `ceil(num_samples * scatter_count_factor)`.
-- `split_interval_list.scatter_mode`: The mode used by GATK `SplitIntervals` for distributing intervals across scatters.
-
-```yaml
 picard_tmp_dir: ".picard"
 local_tmp_dir: ".tmp"
 tmp_dir: "/tmp"

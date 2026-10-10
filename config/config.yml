@@ -13,7 +13,6 @@ input_files:
   dbsnp_vcf_index: "jobs/2026-01-16/Homo_sapiens_assembly38.dbsnp138.vcf.idx"
   wgs_coverage_interval_list: "jobs/2026-01-16/wgs_coverage_regions.hg38.interval_list"
   calling_interval_list: "jobs/2026-01-16/wgs_calling_regions.hg38.interval_list"
-  split_interval_list: "jobs/2026-01-16/wgs_calling_regions.hg38.noCentromeres.noTelomeres.interval_list"
   evaluation_interval_list: "jobs/2026-01-16/wgs_evaluation_regions.hg38.interval_list"
   sequence_grouping_unmapped: "jobs/2026-01-16/sequence_grouping_with_unmapped.txt"
   sequence_grouping: "jobs/2026-01-16/sequence_grouping.txt"
@@ -34,13 +33,9 @@ contamination_sites:
 contamination_underestimation_factor: 0.75
 bin_base_qualities: true
 somatic: false
-read_length: 250
 scatter_interval_list:
   scatter_count: 10
   break_bands_at_multiples_of: 100000
-split_interval_list:
-  scatter_count_factor: 2.5 # 0.15
-  scatter_mode: "BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW" # INTERVAL_COUNT_WITH_DISTRIBUTED_REMAINDER
 
 work_dir: "/data/zusers/ramirezc/wgs-smk"
 results_dir: "results"

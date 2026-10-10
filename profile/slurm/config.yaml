@@ -153,22 +153,6 @@ set-resources:
     threads: 13
     cpus_per_task: 13
     mem: 125000MB
-  collect_wgs_metrics:
-    runtime: 240m
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062,1068] --cpu-freq=High-High:Performance"
-    slurm_partition: 4hours
-    threads: 13
-    cpus_per_task: 13
-    mem: 125000MB
-  collect_raw_wgs_metrics:
-    runtime: 240m
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062,1068] --cpu-freq=High-High:Performance"
-    slurm_partition: 4hours
-    threads: 13
-    cpus_per_task: 13
-    mem: 125000MB
   calibrate_dragen_str_model:
     runtime: 240m
     slurm_extra: "--exclude=z[1024,1062,1068] --cpu-freq=High-High:Performance"
