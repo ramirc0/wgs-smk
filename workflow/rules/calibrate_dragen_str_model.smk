@@ -12,7 +12,7 @@ rule calibrate_dragen_str_model:
     output:
         dragen_str_model = f"{config.results_dir}/calibrate_dragen_str_model/{{sample}}.dragstr",
     params:
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/calibrate_dragen_str_model/{{sample}}.log"
     shell:
         """

@@ -17,12 +17,12 @@ rule merge_gvcfs:
         gvcf = f"{config.results_dir}/merge_gvcfs/{{sample}}.merged.g.vcf.gz"
     params:
         gvcfs = reformat_gvcfs
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/merge_gvcfs/{{sample}}.log"
     shell:
         """
         exec >> {log} 2>&1
-        java -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m -jar /usr/bin/picard.jar \
+        picard -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m \
         MergeVcfs \
             {params.gvcfs} \
             -OUTPUT {output.gvcf}

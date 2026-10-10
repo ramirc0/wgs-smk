@@ -11,7 +11,7 @@ rule check_prevalidation:
         chimerism_value = f"{config.results_dir}/check_prevalidation/{{sample}}.chimerism_value.txt"
     params:
         tmp_dir = config.tmp_dir
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/check_prevalidation/{{sample}}.log"
     run:
         import sys

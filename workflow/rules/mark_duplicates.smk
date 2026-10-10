@@ -10,7 +10,7 @@ rule mark_duplicates:
         picard_tmp_dir = config.get("picard_tmp_dir", ".picard"),
         compression_level = config.get("compression_level", 2),
         mem_mb = lambda wildcards, resources: int(math.ceil(resources.mem_mb * 0.80))
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/mark_duplicates/{{sample}}.log"
     shell:
         """
@@ -19,10 +19,9 @@ rule mark_duplicates:
         PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir} picard_tmp.XXXXXX)
         trap "rm -rf $PICARD_TMP" EXIT
 
-        java -Dsamjdk.compression_level={params.compression_level} \
+        picard -Dsamjdk.compression_level={params.compression_level} \
         -Dorg.xerial.snappy.tempdir=$PICARD_TMP -Djava.io.tmpdir=$PICARD_TMP \
         -Xms{params.mem_mb}m -Xmx{params.mem_mb}m \
-        -jar /usr/bin/picard.jar \
         MarkDuplicates \
             -INPUT {input.bam} \
             -OUTPUT {output.bam} \

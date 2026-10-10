@@ -232,9 +232,9 @@ set-resources:
     cpus_per_task: 13
     mem: 125000MB
 
-use-apptainer: True
-apptainer-prefix: workflow/rules/envs
-apptainer-args: -B /data
+software-deployment-method:
+  - pixi
+software-deployment-cache-prefix: ~/.cache/snakemake/software
 
 retries: 3
 # keep-incomplete: True

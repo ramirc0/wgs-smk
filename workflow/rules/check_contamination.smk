@@ -10,7 +10,7 @@ rule check_contamination:
         metrics = f"{config.results_dir}/check_contamination/{{sample}}.preBqsr.selfSM"
     params:
         contamination_underestimation_factor = config.get("contamination_underestimation_factor", 0.75),
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/check_contamination/{{sample}}.log"
     shell:
         """

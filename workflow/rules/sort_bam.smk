@@ -5,7 +5,7 @@ rule sort_bam:
         bam = f"{config.results_dir}/sort_bam/{{sample}}.bam",
         bam_index = f"{config.results_dir}/sort_bam/{{sample}}.bam.bai",
         md5 = f"{config.results_dir}/sort_bam/{{sample}}.bam.md5"
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/sort_bam/{{sample}}.log"
     shell:
         """

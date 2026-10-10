@@ -6,7 +6,7 @@ import argparse
 
 CMD = (
     """
-    java -jar -Xms{mem_mb}m -Xmx{mem_mb}m -Dorg.xerial.snappy.tempdir={picard_tmp} -Djava.io.tmpdir={picard_tmp} /usr/bin/picard.jar FastqToSam \
+    picard -Xms{mem_mb}m -Xmx{mem_mb}m -Dorg.xerial.snappy.tempdir={picard_tmp} -Djava.io.tmpdir={picard_tmp} FastqToSam \
     -FASTQ {fastq1} \
     -FASTQ2 {fastq2} \
     -OUTPUT {unmapped_bam} \

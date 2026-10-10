@@ -4,7 +4,7 @@ rule dragen_index:
     output:
         dragen_reference = directory(f"{config.results_dir}/dragen_reference"),
         signal = f"{config.results_dir}/dragen_reference/.continue"
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/dragen_index.log"
     shell:
         """

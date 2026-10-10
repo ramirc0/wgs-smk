@@ -13,6 +13,10 @@ configfile: "config/config.yml"
 config = Box(config)
 workdir: config.work_dir
 
+# The workspace path is relative to the rule file. Every rule file sits in rules/.
+SOFTWARE_ENV = pixi(workspace="../envs", env=config["pixi_env"], locked=True)
+GATK_ENV = pixi(workspace="../envs", env="gatk", locked=True)
+
 ##################
 ### common.smk ###
 ##################

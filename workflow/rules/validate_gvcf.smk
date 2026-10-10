@@ -6,7 +6,7 @@ rule validate_gvcf:
         calling_interval_list = config.input_files.calling_interval_list,
     output:
         signal = f"{config.results_dir}/validate_gvcf/{{sample}}.OK",
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/validate_gvcf/{{sample}}.log"
     shell:
         """

@@ -10,7 +10,7 @@ rule scatter_interval_list:
     params:
         scatter_count = config.scatter_interval_list.scatter_count,
         break_bands_at_multiples_of = config.scatter_interval_list.break_bands_at_multiples_of
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/scatter_interval_list.log"
     shell:
         """

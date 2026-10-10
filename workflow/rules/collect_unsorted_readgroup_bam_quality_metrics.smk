@@ -7,12 +7,12 @@ rule collect_unsorted_readgroup_bam_quality_metrics:
     params:
         tmp_dir = config.tmp_dir,
         results_dir = config.results_dir
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log : f"{config.log_dir}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.log"
     shell:
         """
         exec >> {log} 2>&1
-        java -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m -jar /usr/bin/picard.jar CollectMultipleMetrics \
+        picard -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m CollectMultipleMetrics \
             -INPUT {input.bam} \
             -OUTPUT {params.results_dir}/collect_unsorted_readgroup_bam_quality_metrics/{wildcards.sample} \
             -ASSUME_SORTED true \

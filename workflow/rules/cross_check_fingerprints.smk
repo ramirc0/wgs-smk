@@ -7,14 +7,13 @@ rule cross_check_fingerprints:
     params:
         lod_threshold = config.get("lod_threshold", -20.0),
         cross_check_fingerprints_by = config.get("cross_check_fingerprints_by", "READGROUP")
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/cross_check_fingerprints/{{sample}}.log"
     shell:
         """
         exec >> {log} 2>&1
-        java -Dsamjdk.buffer_size=131072 -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 \
+        picard -Dsamjdk.buffer_size=131072 -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 \
         -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m \
-        -jar /usr/bin/picard.jar \
         CrosscheckFingerprints \
             -OUTPUT {output.metrics} \
             -HAPLOTYPE_MAP {input.haplotype_database_file} \

@@ -5,7 +5,7 @@ rule convert_to_cram:
     output:
         cram_md5 = f"{config.results_dir}/convert_to_cram/{{sample}}.cram.md5",
         cram = f"{config.results_dir}/convert_to_cram/{{sample}}.cram"
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/convert_to_cram/{{sample}}.log"
     shell:
         """

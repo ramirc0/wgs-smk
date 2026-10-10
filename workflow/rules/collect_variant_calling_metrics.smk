@@ -13,7 +13,7 @@ rule collect_variant_calling_metrics:
         output_prefix = f"{config.results_dir}/collect_variant_calling_metrics/{{sample}}",
         tmp_dir = config.tmp_dir,
         compression_level = config.get("compression_level", 2),
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/collect_variant_calling_metrics/{{sample}}.log"
     shell:
         """
@@ -32,7 +32,7 @@ rule collect_variant_calling_metrics:
         bcftools index -t $TMP_DBSNP_VCF_REHEADER
         
         echo "Running CollectVariantCallingMetrics..."
-        java -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m -jar /usr/bin/picard.jar \
+        picard -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m \
         CollectVariantCallingMetrics \
             -INPUT {input.gvcf} \
             -OUTPUT {params.output_prefix} \

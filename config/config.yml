@@ -42,9 +42,4 @@ results_dir: "results"
 tmp_dir: "/tmp"
 log_dir: "logs"
 
-environments:
-  default: "docker://clarity001/wgs-smk:latest"
-  gatk: "docker://broadinstitute/gatk:4.6.2.0"
-  # gatk: "docker://us.gcr.io/broad-gatk/gatk:latest"
-  picard: "docker://broadinstitute/picard:3.4.0"
-  # picard: "docker://broadinstitute/picard:latest"
+pixi_env: default

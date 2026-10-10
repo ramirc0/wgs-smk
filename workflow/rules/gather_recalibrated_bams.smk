@@ -20,7 +20,7 @@ rule gather_recalibrated_bams:
         compression_level = config.get("compression_level", 2),
         picard_tmp_dir = config.get("picard_tmp_dir", ".picard"),
         bqsr_bams = reformat_recalibrated_bams
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/gather_recalibrated_bams/{{sample}}.log"
     shell:
         """
@@ -29,10 +29,9 @@ rule gather_recalibrated_bams:
         PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir} picard_tmp.XXXXXX)
         trap "rm -rf $PICARD_TMP" EXIT
 
-        java -Dsamjdk.compression_level={params.compression_level} \
+        picard -Dsamjdk.compression_level={params.compression_level} \
         -Dorg.xerial.snappy.tempdir=$PICARD_TMP -Djava.io.tmpdir=$PICARD_TMP \
         -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m \
-        -jar /usr/bin/picard.jar \
         GatherBamFiles \
             {params.bqsr_bams} \
             -OUTPUT {output.bam} \

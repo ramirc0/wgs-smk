@@ -18,7 +18,7 @@ rule gather_bqsr_reports:
         bqsr_report = f"{config.results_dir}/gather_bqsr_reports/{{sample}}.recal_data.csv"
     params:
         sequence_bqsr_reports = reformat_sequence_bqsr_reports
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/gather_bqsr_reports/{{sample}}.log"
     shell:
         """

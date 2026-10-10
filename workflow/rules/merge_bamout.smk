@@ -18,7 +18,7 @@ rule merge_bamout:
         bam_index = f"{config.results_dir}/merge_bamout/{{sample}}.bam.bai",
     params:
         bams = reformat_sorted_bams
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/merge_bamout/{{sample}}.log"
     shell:
         """

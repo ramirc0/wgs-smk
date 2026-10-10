@@ -11,7 +11,7 @@ rule unmapped_bam:
     params:
         platform = config.get("platform", "Generic"),
         picard_tmp_dir = config.get("picard_tmp_dir", ".picard")
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/unmapped_bam/{{sample}}.log"
     shell:
         """

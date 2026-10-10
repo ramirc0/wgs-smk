@@ -46,7 +46,7 @@ rule apply_bqsr:
         bin_base_qualities_flags = get_bin_base_qualities_flags,
         bin_somatic_base_qualities_flags = get_bin_somatic_base_qualities_flags,
         sequence_group_interval = reformat_sequence_group_interval
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/apply_bqsr/{{sample}}/{{group}}.log"
     shell:
         """

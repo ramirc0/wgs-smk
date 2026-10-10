@@ -17,16 +17,18 @@ This pipeline takes paired-end FASTQ files as input and produces analysis-ready 
 
 This pipeline requires the following dependencies:
 
-- [`conda` (preferably `mamba`)](https://github.com/conda-forge/miniforge)
-- [`singularity`](https://docs.sylabs.io/guides/3.0/user-guide/installation.html)
+- [`pixi`](https://pixi.sh)
 - (Optional) [`slurm`](https://slurm.schedmd.com/quickstart.html)
 
-To start, first setup the runtime environment:
+To start, build the rule environments once, then set up the launcher environment:
 
 ```bash
-mamba env create --name=wgs-smk --file=environments/wgs-smk.yaml
-mamba activate wgs-smk
+pixi install --all --manifest-path workflow/envs/pixi.toml
+pixi shell
 ```
+
+> [!NOTE]
+> Rules run in two pixi environments from `workflow/envs/pixi.toml`: `default` (for most rules) and `gatk`. `default` builds DRAGMAP and VerifyBamID from source at the commits in the image that produced the production results, so its first install compiles both.
 
 Then, download the required resources:
 
@@ -104,15 +106,10 @@ tmp_dir: "/tmp"
 - `tmp_dir`: General temporary directory for intermediate files.
 
 ```yaml
-environments:
-  default: "docker://clarity001/wgs-smk:latest"
-  gatk: "docker://us.gcr.io/broad-gatk/gatk:latest"
-  picard: "docker://broadinstitute/picard:latest"
+pixi_env: default
 ```
 
-- `environments.default`: The default container image. This is a custom image containing samtools, bcftools, picard, DRAGEN-OS, VerifyBamID, and other tools.
-- `environments.gatk`: The GATK container image, used for GATK-specific rules.
-- `environments.picard`: The Picard container image.
+- `pixi_env`: The environment of `workflow/envs/pixi.toml` that non-GATK rules use. It holds samtools, bcftools, Picard, DRAGEN-OS, VerifyBamID, and other tools. GATK rules use the `gatk` environment.
 
 ### Defining Resources
 

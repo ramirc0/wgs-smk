@@ -4,7 +4,7 @@ rule sort_bamout:
     output:
         bam = f"{config.results_dir}/sort_bamout/{{sample}}/{{scatter}}.bam",
         md5 = f"{config.results_dir}/sort_bamout/{{sample}}/{{scatter}}.bam.md5",
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/sort_bamout/{{sample}}/{{scatter}}.log"
     shell:
         """

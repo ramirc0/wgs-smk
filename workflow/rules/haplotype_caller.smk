@@ -15,7 +15,7 @@ rule haplotype_caller:
     params:
         picard_tmp_dir = config.get("picard_tmp_dir", ".picard"),
         compression_level = config.get("compression_level", 2),
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/haplotype_caller/{{sample}}/{{scatter}}.log"
     shell:
         """

@@ -3,7 +3,7 @@ rule dragen_hardfilter_gvcf:
         gvcf = f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.g.vcf.gz",
     output:
         gvcf = f"{config.results_dir}/dragen_hardfilter_gvcf/{{sample}}/{{scatter}}.hardfiltered.g.vcf.gz",
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/dragen_hardfilter_gvcf/{{sample}}_{{scatter}}.log"
     shell:
         """

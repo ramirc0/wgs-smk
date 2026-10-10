@@ -52,7 +52,7 @@ rule base_recalibration:
         known_indel_sites_vcfs_formatted = reformat_known_indel_sites_vcfs(config.input_files.known_indel_sites_vcfs),
         sequence_group_interval = reformat_sequence_group_interval,
         tmp_dir = config.tmp_dir
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/base_recalibrator/{{sample}}/{{group}}.log"
     shell:
         """

@@ -19,12 +19,12 @@ rule collect_aggregation_metrics:
         signal = f"{config.results_dir}/collect_aggregation_metrics/{{sample}}.continue"
     params:
         output_prefix = f"{config.results_dir}/collect_aggregation_metrics/{{sample}}"
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/collect_aggregation_metrics/{{sample}}.log"
     shell:
         """
         exec >> {log} 2>&1
-        java -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m -jar /usr/bin/picard.jar \
+        picard -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m \
         CollectMultipleMetrics \
             -INPUT {input.bam} \
             -REFERENCE_SEQUENCE {input.reference_fasta} \

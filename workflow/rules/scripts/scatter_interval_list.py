@@ -6,7 +6,7 @@ import sys
 
 CMD = (
     """
-    java -Xms{mem_mb}m -Xmx{mem_mb}m -jar /usr/bin/picard.jar \
+    picard -Xms{mem_mb}m -Xmx{mem_mb}m \
     IntervalListTools \
           -SCATTER_COUNT {scatter_count} \
           -SUBDIVISION_MODE BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW \

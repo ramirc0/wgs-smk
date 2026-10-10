@@ -10,7 +10,7 @@ rule unmapped_bam_to_aligned:
         unmap_contaminant_reads = config.get("unmap_contaminant_reads", False),
         compression_level = config.get("compression_level", 2),
         picard_tmp_dir = config.get("picard_tmp_dir", ".picard")
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log : f"{config.log_dir}/unmapped_bam_to_aligned/{{sample}}.log"
     shell:
         """
@@ -20,7 +20,7 @@ rule unmapped_bam_to_aligned:
         trap "rm -rf $PICARD_TMP" EXIT
 
         dragen-os -b {input.bam} -r {input.dragen_reference} --num-threads {resources.threads} --interleaved=1 --preserve-map-align-order true | samtools view -@ {resources.threads} -h -O BAM - > {params.tmp_dir}/{wildcards.sample}.aligned.bam
-        java -Dsamjdk.compression_level={params.compression_level} -Dorg.xerial.snappy.tempdir=$PICARD_TMP -Djava.io.tmpdir=$PICARD_TMP -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m -jar /usr/bin/picard.jar MergeBamAlignment \
+        picard -Dsamjdk.compression_level={params.compression_level} -Dorg.xerial.snappy.tempdir=$PICARD_TMP -Djava.io.tmpdir=$PICARD_TMP -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m MergeBamAlignment \
             -VALIDATION_STRINGENCY SILENT \
             -EXPECTED_ORIENTATIONS FR \
             -ATTRIBUTES_TO_RETAIN X0 \

@@ -6,7 +6,7 @@ rule validate_sam_file:
         reference_fasta = config.input_files.reference_fasta,
     output:
         validation_report = f"{config.results_dir}/validate_sam_file/{{sample}}.validation_report",
-    container: config.environments.default
+    software: SOFTWARE_ENV
     log: f"{config.log_dir}/validate_sam_file/{{sample}}.log"
     shell:
         """
@@ -27,7 +27,7 @@ rule validate_sam_file:
             FLAG="-SKIP_MATE_VALIDATION false"
         fi
         
-        java -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m -jar /usr/bin/picard.jar \
+        picard -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m \
         ValidateSamFile \
             -INPUT {input.bam} \
             -OUTPUT {output.validation_report} \

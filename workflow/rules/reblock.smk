@@ -4,7 +4,7 @@ rule reblock:
         gvcf = f"{config.results_dir}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
     output:
         gvcf = f"{config.results_dir}/reblock/{{sample}}.rb.g.vcf.gz",
-    container: config.environments.gatk
+    software: GATK_ENV
     log: f"{config.log_dir}/reblock/{{sample}}.log"
     shell:
         """
