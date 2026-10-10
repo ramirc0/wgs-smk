@@ -1,0 +1,28 @@
+[workspace]
+name = "wgs-smk-envs"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+preview = ["pixi-build"]
+
+# Versions match clarity001/wgs-smk:latest as pulled on 2025-12-22, the image that produced the production results.
+[dependencies]
+python = "==3.12.7"
+bc = "==1.07.1"
+bcftools = "==1.22"
+htslib = "==1.22"
+openjdk = "==25.0.1"
+perl = "*"
+picard = "==3.4.0"
+r-base = "==4.5.1"
+samtools = "==1.22"
+# Built from the image's commits. bioconda's releases differ from them in code.
+dragmap = { path = "dragmap" }
+verifybamid2 = { path = "verifybamid2" }
+
+# GATK 4.6.2.0 as in us.gcr.io/broad-gatk/gatk:latest pulled on 2025-07-31. That image ran OpenJDK 17.0.12, which conda-forge lacks.
+[feature.gatk.dependencies]
+gatk4 = "==4.6.2.0"
+openjdk = "==17.0.13"
+
+[environments]
+gatk = { features = ["gatk"], no-default-feature = true }

@@ -1,0 +1,43 @@
+# DRAGMAP as built in clarity001/wgs-smk:latest: master c4cb6c94, GCC 9, the
+# image's CFLAGS/CXXFLAGS/LDFLAGS and config.mk's own CPPFLAGS (-mavx2, no NDEBUG).
+context:
+  version: 1.3.0.post1
+  commit: c4cb6c94baaf6821db3fa696c53cdd809fb92304
+
+package:
+  name: dragmap
+  version: ${{ version }}
+
+source:
+  git: https://github.com/Illumina/DRAGMAP.git
+  rev: ${{ commit }}
+  patches:
+    # Build-only: Boost 1.84 no longer includes make_iterator_range transitively.
+    - boost-iterator-range.patch
+
+build:
+  number: 0
+  script:
+    # Conda's flags would add -march and -DNDEBUG. NDEBUG compiles out the
+    # posix_memalign call that ssw_avx2.cpp wraps in BOOST_ASSERT.
+    - unset CPPFLAGS
+    # The image's CFLAGS/CXXFLAGS/LDFLAGS, plus the defaults its Ubuntu GCC 9.4 adds.
+    - export UBUNTU_GCC_DEFAULTS="-D_FORTIFY_SOURCE=2 -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
+    - export CFLAGS="-O3 $UBUNTU_GCC_DEFAULTS" CXXFLAGS="-O3 $UBUNTU_GCC_DEFAULTS" LDFLAGS=-flto
+    # config.mk rejects any uname without el7. The version reaches the BAM @PG line.
+    - make -j${CPU_COUNT} OS=el7 HAS_GTEST=0 BOOST_ROOT=$PREFIX VERSION_STRING=1.3.0-1-gc4cb6c94
+    - install -Dm755 build/release/dragen-os $PREFIX/bin/dragen-os
+
+requirements:
+  build:
+    - gcc_linux-64 ==9.5.0
+    - gxx_linux-64 ==9.5.0
+    - make
+  host:
+    - libboost-devel 1.84.*
+    - zlib
+
+about:
+  homepage: https://github.com/Illumina/DRAGMAP
+  license: GPL-3.0-or-later
+  summary: DRAGEN open-source mapper, at the commit in clarity001/wgs-smk:latest.

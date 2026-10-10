@@ -1,0 +1,46 @@
+# VerifyBamID as built in clarity001/wgs-smk:latest: master 4b362f51, GCC 9,
+# CMake with no build type and the image's CFLAGS/CXXFLAGS/LDFLAGS.
+context:
+  version: 2.0.1.post35
+  commit: 4b362f5191b8385d038350acc03800890dd66524
+
+package:
+  name: verifybamid2
+  version: ${{ version }}
+
+source:
+  git: https://github.com/Griffan/VerifyBamID.git
+  rev: ${{ commit }}
+
+build:
+  number: 0
+  script:
+    # Conda's flags would add -march and -DNDEBUG, and its CMAKE_ARGS a Release build type.
+    - unset CPPFLAGS
+    # The image's CFLAGS/CXXFLAGS/LDFLAGS, plus the defaults its Ubuntu GCC 9.4 adds.
+    - export UBUNTU_GCC_DEFAULTS="-D_FORTIFY_SOURCE=2 -fasynchronous-unwind-tables -fstack-protector-strong -fstack-clash-protection -fcf-protection"
+    - export CFLAGS="-O3 $UBUNTU_GCC_DEFAULTS" CXXFLAGS="-O3 $UBUNTU_GCC_DEFAULTS" LDFLAGS=-flto
+    - cmake -S . -B build -DCMAKE_PREFIX_PATH=$PREFIX -DCMAKE_BUILD_TYPE=
+    - cmake --build build -j${CPU_COUNT}
+    # The CTest cases diff the ancestry estimates against expected outputs.
+    - ctest --test-dir build --output-on-failure
+    - install -Dm755 bin/VerifyBamID $PREFIX/bin/VerifyBamID
+
+requirements:
+  build:
+    - cmake 3.*
+    - gcc_linux-64 ==9.5.0
+    - gxx_linux-64 ==9.5.0
+    - make
+  host:
+    - bzip2
+    - htslib ==1.22
+    # libcurl 8.22 pulls icu 78 through libpsl. r-base 4.5.1 needs icu 75.
+    - libcurl 8.21.*
+    - xz
+    - zlib
+
+about:
+  homepage: https://github.com/Griffan/VerifyBamID
+  license: MIT
+  summary: VerifyBamID2, at the commit in clarity001/wgs-smk:latest.

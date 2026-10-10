@@ -1,0 +1,6 @@
+[package]
+name = "verifybamid2"
+version = "2.0.1.post35"
+
+[package.build]
+backend = { name = "pixi-build-rattler-build", version = "*" }
