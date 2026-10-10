@@ -20,5 +20,12 @@ rule unmapped_bam:
         PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir} picard_tmp.XXXXXX)
         trap "rm -rf $PICARD_TMP" EXIT
 
-        python workflow/rules/scripts/unmapped_bam.py {resources.mem_mb} $PICARD_TMP {wildcards.sample} {params.platform} {input.R1} {input.R2} {output.bam}
+        python {workflow.basedir}/scripts/unmapped_bam.py \
+            --mem-mb {resources.mem_mb} \
+            --tmp-dir $PICARD_TMP \
+            --sample {wildcards.sample} \
+            --platform {params.platform} \
+            --r1 {input.R1} \
+            --r2 {input.R2} \
+            --output {output.bam}
         """

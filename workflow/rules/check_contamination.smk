@@ -15,5 +15,13 @@ rule check_contamination:
     shell:
         """
         exec >> {log} 2>&1
-        python ./workflow/rules/scripts/check_contamination.py {resources.threads} {output.metrics} {input.bam} {input.reference_fasta} {input.contamination_sites_ud} {input.contamination_sites_bed} {input.contamination_sites_mu} {params.contamination_underestimation_factor}
+        python {workflow.basedir}/scripts/check_contamination.py \
+            --threads {resources.threads} \
+            --output {output.metrics} \
+            --bam {input.bam} \
+            --reference {input.reference_fasta} \
+            --ud {input.contamination_sites_ud} \
+            --bed {input.contamination_sites_bed} \
+            --mu {input.contamination_sites_mu} \
+            --underestimation-factor {params.contamination_underestimation_factor}
         """

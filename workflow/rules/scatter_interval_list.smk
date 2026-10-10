@@ -15,10 +15,10 @@ rule scatter_interval_list:
     shell:
         """
         exec >> {log} 2>&1
-        python workflow/rules/scripts/scatter_interval_list.py \
-            {resources.mem_mb} \
-            {params.scatter_count} \
-            {params.break_bands_at_multiples_of} \
-            {input.interval_list} \
-            {output.outdir}
+        python {workflow.basedir}/scripts/scatter_interval_list.py \
+            --mem-mb {resources.mem_mb} \
+            --scatter-count {params.scatter_count} \
+            --break-bands-at-multiples-of {params.break_bands_at_multiples_of} \
+            --interval-list {input.interval_list} \
+            --outdir {output.outdir}
         """
