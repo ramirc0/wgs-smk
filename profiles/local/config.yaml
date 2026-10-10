@@ -1,0 +1,80 @@
+# Local execution.
+software-deployment-method:
+  - pixi
+# Snakemake copies every env package here. pixi installs from its own cache.
+# One copy per user instead of one per workdir.
+software-deployment-cache-prefix: ~/.cache/snakemake/software
+
+cores: 52
+printshellcmds: true
+rerun-incomplete: true
+keep-going: true
+show-failed-logs: true
+retries: 1
+benchmark-extended: true
+
+default-resources:          # reference_index uses these as they are
+  mem_mb: 4000
+  runtime: 240
+
+set-threads:
+  dragen_index: 52
+  unmapped_bam: 26
+  collect_quality_yield_metrics: 4
+  unmapped_bam_to_aligned: 52
+  collect_unsorted_readgroup_bam_quality_metrics: 4
+  mark_duplicates: 26
+  sort_bam: 26
+  cross_check_fingerprints: 13
+  base_recalibration: 6
+  check_contamination: 13
+  gather_bqsr_reports: 13
+  apply_bqsr: 13
+  gather_recalibrated_bams: 13
+  collect_readgroup_bam_quality_metrics: 13
+  collect_aggregation_metrics: 13
+  calculate_readgroup_checksum: 13
+  convert_to_cram: 26
+  check_prevalidation: 6
+  validate_sam_file: 13
+  calibrate_dragen_str_model: 26
+  scatter_interval_list: 6
+  haplotype_caller: 26
+  dragen_hardfilter_gvcf: 13
+  merge_gvcfs: 26
+  sort_bamout: 13
+  merge_bamout: 26
+  reblock: 13
+  validate_gvcf: 6
+  collect_variant_calling_metrics: 13
+
+set-resources:              # tune from benchmarks/ TSVs after a real run
+  dragen_index: {mem_mb: 500000}
+  unmapped_bam: {mem_mb: 250000}
+  collect_quality_yield_metrics: {mem_mb: 32000}
+  unmapped_bam_to_aligned: {mem_mb: 500000}
+  collect_unsorted_readgroup_bam_quality_metrics: {mem_mb: 32000}
+  mark_duplicates: {mem_mb: 250000}
+  sort_bam: {mem_mb: 250000}
+  cross_check_fingerprints: {mem_mb: 125000}
+  base_recalibration: {mem_mb: 62500}
+  check_contamination: {mem_mb: 125000}
+  gather_bqsr_reports: {mem_mb: 125000}
+  apply_bqsr: {mem_mb: 125000}
+  gather_recalibrated_bams: {mem_mb: 125000}
+  collect_readgroup_bam_quality_metrics: {mem_mb: 125000}
+  collect_aggregation_metrics: {mem_mb: 125000}
+  calculate_readgroup_checksum: {mem_mb: 125000}
+  convert_to_cram: {mem_mb: 250000}
+  check_prevalidation: {mem_mb: 62500}
+  validate_sam_file: {mem_mb: 125000}
+  calibrate_dragen_str_model: {mem_mb: 250000}
+  scatter_interval_list: {mem_mb: 62500}
+  haplotype_caller: {mem_mb: 250000}
+  dragen_hardfilter_gvcf: {mem_mb: 125000}
+  merge_gvcfs: {mem_mb: 250000}
+  sort_bamout: {mem_mb: 125000}
+  merge_bamout: {mem_mb: 250000}
+  reblock: {mem_mb: 125000}
+  validate_gvcf: {mem_mb: 62500}
+  collect_variant_calling_metrics: {mem_mb: 125000}

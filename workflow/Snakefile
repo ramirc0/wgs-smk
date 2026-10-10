@@ -1,171 +1,26 @@
-import os
-import copy
-import tempfile
-import shutil
-import uuid
-from box import Box
-import polars as pl
-import subprocess
-import pickle
-from pathlib import Path
 
-configfile: "config/config.yml"
-config = Box(config)
-workdir: config.work_dir
+include: "rules/common.smk"
+include: "rules/reference.smk"
+include: "rules/align.smk"
+include: "rules/bqsr.smk"
+include: "rules/cram.smk"
+include: "rules/call.smk"
+include: "rules/qc.smk"
 
-# The workspace path is relative to the rule file. Every rule file sits in rules/.
-SOFTWARE_ENV = pixi(workspace="../envs", env=config["pixi_env"], locked=True)
-GATK_ENV = pixi(workspace="../envs", env="gatk", locked=True)
-
-##################
-### common.smk ###
-##################
-
-metadata = pl.read_csv(config.input_files.metadata, separator="\t")
-
-SAMPLES = metadata["Sample"].to_list()
-read1 = metadata["R1"].to_list()    
-read2 = metadata["R2"].to_list()
-
-READ_LOOKUP = dict(zip(SAMPLES, zip(read1, read2)))
-
-### ensure picard tmp dir exists ###
-
-Path(config.get("picard_tmp_dir", ".picard")).mkdir(parents=True, exist_ok=True)
-Path(config.get("local_tmp_dir", ".tmp")).mkdir(parents=True, exist_ok=True)
-
-### index reference fasta file ###
-# TODO: Make this more robust (i.e. ext might be .fasta.gz, .fa, etc.)
-# Better yet, might be better to just make a copy and then use a KNOWN file
-# name throughout the program, instead of predicting what the user will provide.
-
-def create_fasta_derivatives(reference_fasta):
-    fasta_index = Path(reference_fasta + ".fai")
-    fasta_dict = Path(reference_fasta.replace(".fasta", ".dict"))
-    chromsizes = Path(reference_fasta.replace(".fasta", ".chromsizes"))
-    if not fasta_index.exists():
-        subprocess.check_call(f"samtools faidx {reference_fasta}", shell=True)
-    if not fasta_dict.exists():
-        subprocess.check_call(f"samtools dict {reference_fasta} -o {reference_fasta.rstrip('.fasta')}.dict", shell=True)
-    if not chromsizes.exists():
-        subprocess.check_call(f"cut -f1,2 {reference_fasta}.fai > {reference_fasta.rstrip('.fasta')}.chromsizes", shell=True)
-    return fasta_index, fasta_dict, chromsizes
-
-fasta_index, fasta_dict, chromsizes = create_fasta_derivatives(config.input_files.reference_fasta)
-assert fasta_index.exists() and fasta_dict.exists() and chromsizes.exists()
-config.input_files.reference_fasta_index = str(fasta_index)
-config.input_files.reference_fasta_dict = str(fasta_dict)
-config.input_files.chromsizes = str(chromsizes)
-
-SEQUENCE_GROUPS_PATH = config.input_files.sequence_grouping
-with open(SEQUENCE_GROUPS_PATH, "r") as tsv_file:
-    lines = tsv_file.readlines()
-    NUM_SEQUENCE_GROUPS = len(lines)
-
-#########################
-### end of common.smk ###
-#########################
-
-include: "rules/dragen_index.smk"
-include: "rules/unmapped_bam.smk"
-include: "rules/collect_quality_yield_metrics.smk"
-include: "rules/unmapped_bam_to_aligned.smk"
-include: "rules/collect_unsorted_readgroup_bam_quality_metrics.smk"
-include: "rules/mark_duplicates.smk"
-include: "rules/sort_bam.smk"
-include: "rules/cross_check_fingerprints.smk"
-include: "rules/check_contamination.smk"
-include: "rules/base_recalibration.smk"
-include: "rules/gather_bqsr_reports.smk"
-include: "rules/apply_bqsr.smk"
-include: "rules/gather_recalibrated_bams.smk"
-include: "rules/collect_readgroup_bam_quality_metrics.smk"
-include: "rules/collect_aggregation_metrics.smk"
-include: "rules/calculate_readgroup_checksum.smk"
-include: "rules/convert_to_cram.smk"
-include: "rules/check_prevalidation.smk"
-include: "rules/validate_sam_file.smk"
-include: "rules/calibrate_dragen_str_model.smk"
-include: "rules/scatter_interval_list.smk"
-include: "rules/haplotype_caller.smk"
-include: "rules/dragen_hardfilter_gvcf.smk"
-include: "rules/merge_gvcfs.smk"
-include: "rules/sort_bamout.smk"
-include: "rules/merge_bamout.smk"
-include: "rules/reblock.smk"
-include: "rules/validate_gvcf.smk"
-include: "rules/collect_variant_calling_metrics.smk"
 
 rule all:
     input:
-        os.path.join(config.results_dir, "dragen_reference/.continue"),
-        expand(f"{config.results_dir}/unmapped_bam/{{sample}}.bam", sample=SAMPLES),
-        expand(f"{config.results_dir}/collect_quality_yield_metrics/{{sample}}.metrics", sample=SAMPLES),
-        expand(f"{config.results_dir}/unmapped_bam_to_aligned/{{sample}}.bam", sample=SAMPLES),
         expand(
             [
-                f"{config.results_dir}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_metrics",
-                f"{config.results_dir}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_histogram.pdf",
-            ],
-            sample=SAMPLES
-        ),
-        expand(f"{config.results_dir}/mark_duplicates/{{sample}}.bam", sample=SAMPLES),
-        expand(f"{config.results_dir}/sort_bam/{{sample}}.bam", sample=SAMPLES),
-        expand(f"{config.results_dir}/cross_check_fingerprints/{{sample}}.metrics", sample=SAMPLES),
-        expand(f"{config.results_dir}/check_contamination/{{sample}}.preBqsr.selfSM", sample=SAMPLES),
-        expand(
-            f"{config.results_dir}/base_recalibrator/{{sample}}/{{group}}.recal_data.csv",
-            sample=SAMPLES, group=list(range(NUM_SEQUENCE_GROUPS))
-        ),
-        expand(f"{config.results_dir}/gather_bqsr_reports/{{sample}}.recal_data.csv", sample=SAMPLES),
-        expand(
-            f"{config.results_dir}/apply_bqsr/{{sample}}/{{group}}.bam",
-            sample=SAMPLES, group=list(range(NUM_SEQUENCE_GROUPS))
-        ),
-        expand(f"{config.results_dir}/gather_recalibrated_bams/{{sample}}.bam", sample=SAMPLES),
-        expand(f"{config.results_dir}/collect_readgroup_bam_quality_metrics/{{sample}}.continue", sample=SAMPLES),
-        expand(f"{config.results_dir}/collect_aggregation_metrics/{{sample}}.continue", sample=SAMPLES),
-        expand(f"{config.results_dir}/calculate_readgroup_checksum/{{sample}}.bam.md5", sample=SAMPLES),
-        expand(f"{config.results_dir}/convert_to_cram/{{sample}}.cram", sample=SAMPLES),
-        expand(
-            [
-                f"{config.results_dir}/check_prevalidation/{{sample}}.duplication_value.txt", 
-                f"{config.results_dir}/check_prevalidation/{{sample}}.chimerism_value.txt"
-            ],
-            sample=SAMPLES
-        ),
-        expand(f"{config.results_dir}/validate_sam_file/{{sample}}.validation_report", sample=SAMPLES),
-        expand(f"{config.results_dir}/calibrate_dragen_str_model/{{sample}}.dragstr", sample=SAMPLES),
-        expand(
-            f"{config.results_dir}/scatter_interval_list/temp_{{scatter:04d}}_of_{config.scatter_interval_list.scatter_count}/{{scatter}}scattered.interval_list",
-            scatter=list(range(1, config.scatter_interval_list.scatter_count + 1))
-        ),
-        expand(
-            [
-                f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.g.vcf.gz",
-                f"{config.results_dir}/haplotype_caller/{{sample}}/{{scatter}}.bamout.bam",
+                f"{OUTDIR}/{{sample}}/collect_quality_yield_metrics/{{sample}}.metrics",
+                f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_metrics",
+                f"{OUTDIR}/{{sample}}/cross_check_fingerprints/{{sample}}.metrics",
+                f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}.alignment_summary_metrics",
+                f"{OUTDIR}/{{sample}}/calculate_readgroup_checksum/{{sample}}.bam.md5",
+                f"{OUTDIR}/{{sample}}/validate_sam_file/{{sample}}.validation_report",
+                f"{OUTDIR}/{{sample}}/merge_bamout/{{sample}}.bam",
+                f"{OUTDIR}/{{sample}}/validate_gvcf/{{sample}}.OK",
+                f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}.variant_calling_summary_metrics",
             ],
             sample=SAMPLES,
-            scatter=range(1, config.scatter_interval_list.scatter_count + 1)
-        ),
-        expand(
-            f"{config.results_dir}/dragen_hardfilter_gvcf/{{sample}}/{{scatter}}.hardfiltered.g.vcf.gz",
-            sample=SAMPLES,
-            scatter=range(1, config.scatter_interval_list.scatter_count + 1)
-        ),
-        expand(f"{config.results_dir}/merge_gvcfs/{{sample}}.merged.g.vcf.gz", sample=SAMPLES),
-        expand(
-            f"{config.results_dir}/sort_bamout/{{sample}}/{{scatter}}.bam",
-            sample=SAMPLES,
-            scatter=range(1, config.scatter_interval_list.scatter_count + 1)
-        ),
-        expand(f"{config.results_dir}/merge_bamout/{{sample}}.bam", sample=SAMPLES),
-        expand(f"{config.results_dir}/reblock/{{sample}}.rb.g.vcf.gz", sample=SAMPLES),
-        expand(f"{config.results_dir}/validate_gvcf/{{sample}}.OK", sample=SAMPLES),
-        expand(
-            [
-                f"{config.results_dir}/collect_variant_calling_metrics/{{sample}}.variant_calling_detail_metrics",
-                f"{config.results_dir}/collect_variant_calling_metrics/{{sample}}.variant_calling_summary_metrics",
-            ],
-            sample=SAMPLES
         ),

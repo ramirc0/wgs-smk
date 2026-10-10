@@ -1,18 +1,24 @@
-# User-defined
-efficiency_report_*.csv
+logs
+results
+config/*.tsv
+!config/samples.example.tsv
+# copy from config.yaml.template, then edit
+config/config.yaml
+.snakemake
+scratch
+.conda
+/resources
+benchmarks
+
 MOHD_RESULTS/
-pipeline.txt
-layout.txt
+jobs/
 prototyping/
-.snakemake/
 triage.d/
-results/
+qc/
 .picard/
 .test/
-logs/
-jobs/
-*.sif
-qc/
+pipeline.txt
+layout.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -63,6 +69,7 @@ nosetests.xml
 coverage.xml
 *.cover
 *.py.cover
+*.lcov
 .hypothesis/
 .pytest_cache/
 cover/
@@ -138,13 +145,14 @@ ipython_config.py
 # pixi.lock
 #   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
 #   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi
+.pixi/*
+!.pixi/config.toml
 
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
 
 # Celery stuff
-celerybeat-schedule
+celerybeat-schedule*
 celerybeat.pid
 
 # Redis
@@ -211,11 +219,13 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
 #   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#   and can be added to the global gitignore or merged into this file. However, if you prefer,
 #   you could uncomment the following to ignore the entire vscode folder
 # .vscode/
+# Temporary file for partial code execution
+tempCodeRunnerFile.py
 
 # Ruff stuff:
 .ruff_cache/
