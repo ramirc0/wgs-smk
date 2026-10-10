@@ -1,226 +1,242 @@
-# WGS Snakemake Pipeline
+# wgs-smk
 
-## Overview
-
-Here we present a [snakemake](https://github.com/snakemake/snakemake.git) pipeline for whole genome sequencing (WGS) analysis of germline single samples. Starting from paired-end FASTQ files, this pipeline performs alignment, duplicate marking, base quality score recalibration (BQSR), variant calling, and produces analysis-ready gVCFs suitable for downstream joint genotyping.
+A [Snakemake](https://github.com/snakemake/snakemake) pipeline for germline
+whole genome sequencing of single samples. Paired-end FASTQs are aligned with
+DRAGMAP, duplicate-marked and base-quality recalibrated. GATK HaplotypeCaller
+then calls variants in DRAGEN mode. Each sample ends as a reblocked gVCF, the
+input of [joint-genotyping-smk](https://github.com/christian728504/joint-genotyping-smk.git).
 
 > [!NOTE]
 > This pipeline is based on the [WARP Whole Genome Germline Single Sample pipeline](https://broadinstitute.github.io/warp/docs/Pipelines/Whole_Genome_Germline_Single_Sample/README) by the Broad Institute, [originally licensed](https://github.com/broadinstitute/warp/blob/develop/LICENSE) under BSD. See [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) for details.
 
-## Example Usage
+## Layout
 
-### Prerequisites
-
-This pipeline takes paired-end FASTQ files as input and produces analysis-ready gVCFs. The output gVCFs are suitable as input for the [joint-genotyping-smk](https://github.com/christian728504/joint-genotyping-smk.git) pipeline for joint genotyping across multiple samples.
-
-### Dependencies
-
-This pipeline requires the following dependencies:
-
-- [`pixi`](https://pixi.sh)
-- (Optional) [`slurm`](https://slurm.schedmd.com/quickstart.html)
-
-To start, build the rule environments once, then set up the launcher environment:
-
-```bash
-pixi install --all --manifest-path workflow/envs/pixi.toml
-pixi shell
+```
+config/
+  config.yaml.template   parameters + paths; copy to config.yaml (gitignored)
+  samples.example.tsv    one row per sample: sample_id, r1, r2
+workflow/
+  Snakefile              includes the rule files, defines rule all
+  rules/
+    common.smk           config, sample sheet, path constants, repeat_flag()
+    reference.smk        FASTA indexes, DRAGEN hash table, interval scatter
+    align.smk            uBAM, DRAGMAP + MergeBamAlignment, MarkDuplicates, sort
+    bqsr.smk             BaseRecalibrator, ApplyBQSR, gathers
+    cram.smk             CRAM, prevalidation, ValidateSamFile
+    call.smk             DRAGstr, HaplotypeCaller, hard filter, merge, reblock
+    qc.smk               Picard metrics, VerifyBamID, fingerprints
+  scripts/               argparse scripts, each with build_parser() + main()
+  envs/
+    pixi.toml            rule envs (pixi workspace): default and gatk
+    dragmap/             source package: DRAGMAP at the production commit
+    verifybamid2/        source package: VerifyBamID at the production commit
+profiles/
+  local/config.yaml      local execution
+  slurm/config.yaml      SLURM (per-rule resources, retried with more memory)
+pixi.toml                launcher env + lint task
+pyproject.toml           ruff + numpydoc config
 ```
 
-> [!NOTE]
-> Rules run in two pixi environments from `workflow/envs/pixi.toml`: `default` (for most rules) and `gatk`. `default` builds DRAGMAP and VerifyBamID from source at the commits in the image that produced the production results, so its first install compiles both.
+## Running
 
-Then, download the required resources:
+```bash
+cp config/config.yaml.template config/config.yaml  # then edit
+cp config/samples.example.tsv config/samples.tsv   # then edit
+pixi install --all --manifest-path workflow/envs/pixi.toml  # once; compiles DRAGMAP and VerifyBamID
+pixi shell                                         # launcher env
+snakemake -n -p --profile profiles/local           # dry run
+snakemake --profile profiles/local                 # local
+snakemake --profile profiles/slurm                 # SLURM
+```
+
+The SLURM profile holds Weng Lab cluster settings, such as partitions, excluded
+nodes and the `cascadelake` constraint. Adapt them for another cluster with the
+[SLURM executor docs](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html).
+Tune `set-resources` from the `benchmarks/<run_id>/` TSVs after a first run.
+
+## Inputs
+
+The sample sheet is a TSV with a header row. `sample_id` names the sample. `r1`
+and `r2` are its gzipped paired-end FASTQs. Lines that start with `#` are
+comments. Each `sample_id` MUST be unique. The first R1 header MUST hold 8
+colon-separated fields. They set the read group of every read.
+
+Download the references into `resources/` (gitignored):
 
 ```bash
 curl -fsSL https://users.wenglab.org/ramirezc/mohd/resources/wgs-smk.tar.zst | tar --use-compress-program=zstd -xf -
 ```
 
-### Input Metadata
+`reference_index` writes the `.fai`, `.dict` and `.chromsizes` files beside the
+FASTA when they are missing.
 
-This pipeline expects a tab-delimited metadata file with a header row. The file must contain at minimum the following columns:
+## Configuration
 
-- `Sample`: Unique sample identifiers.
-- `R1`: Path to the forward (R1) FASTQ file.
-- `R2`: Path to the reverse (R2) FASTQ file.
-
-An example metadata file:
-
-```
-Sample	R1	R2
-EG100001	/path/to/EG100001_R1.fastq.gz	/path/to/EG100001_R2.fastq.gz
-EG100002	/path/to/EG100002_R1.fastq.gz	/path/to/EG100002_R2.fastq.gz
-```
-
-### Example Configfile
-
-For a complete example, see [config/config.yml](config/config.yml). From this file you'll want to pay attention to the following sections:
-
-```yaml
-input_files:
-  metadata: "jobs/2026-01-16/metadata.tsv"
-  reference_fasta: "jobs/2026-01-16/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
-```
-
-- `input_files.metadata`: Path to the tab-delimited metadata file containing sample IDs and FASTQ paths.
-- `input_files.reference_fasta`: Path to the reference FASTA file. The pipeline will automatically generate the `.fai` index, `.dict` dictionary, and `.chromsizes` file if they do not already exist.
-
-```yaml
-platform: "Illumina"
-compression_level: 2
-unmap_contaminant_reads: True
-```
-
-- `platform`: Sequencing platform (used in read group metadata). Default is `Illumina`.
-- `compression_level`: BAM compression level. Default is `2`.
-- `unmap_contaminant_reads`: Whether to unmap contaminant reads during alignment merging. Default is `True`.
-
-```yaml
-contamination_sites:
-  ud: "jobs/2026-01-16/1000g.phase3.100k.b38.vcf.gz.dat.UD"
-  bed: "jobs/2026-01-16/1000g.phase3.100k.b38.vcf.gz.dat.bed"
-  mu: "jobs/2026-01-16/1000g.phase3.100k.b38.vcf.gz.dat.mu"
-contamination_underestimation_factor: 0.75
-```
-
-- `contamination_sites`: Paths to VerifyBamID resource files for contamination estimation.
-- `contamination_underestimation_factor`: Factor applied to contamination estimates. Default is `0.75`.
-
-```yaml
-scatter_interval_list:
-  scatter_count: 10
-  break_bands_at_multiples_of: 100000
-```
-
-- `scatter_interval_list.scatter_count`: Number of intervals to scatter for parallelized variant calling with HaplotypeCaller. Higher values increase parallelism.
-- `scatter_interval_list.break_bands_at_multiples_of`: Break bands at multiples of this value when scattering intervals. Default is `100000`.
-
-```yaml
-picard_tmp_dir: ".picard"
-local_tmp_dir: ".tmp"
-tmp_dir: "/tmp"
-```
-
-- `picard_tmp_dir`: Temporary directory for Picard tools. In some compute environments, `/tmp` is mounted with `noexec`, which will cause Picard to fail. In this case, set this to a local directory such as `.picard`.
-- `local_tmp_dir`: Local temporary directory for intermediate files.
-- `tmp_dir`: General temporary directory for intermediate files.
-
-```yaml
-pixi_env: default
-```
-
-- `pixi_env`: The environment of `workflow/envs/pixi.toml` that non-GATK rules use. It holds samtools, bcftools, Picard, DRAGEN-OS, VerifyBamID, and other tools. GATK rules use the `gatk` environment.
-
-### Defining Resources
-
-All resource definitions for rules are located in [profile/slurm/config.yaml](profile/slurm/config.yaml).
-
-```yaml
-  haplotype_caller:
-    runtime: 720m
-    constraint: cascadelake
-    slurm_extra: "--exclude=z[1024,1062,1068] --cpu-freq=High-High:Performance"
-    slurm_partition: 12hours,5days
-    threads: 26
-    cpus_per_task: 26
-    mem: 250000MB
-```
-
-In this instance, we are requesting a job on a SLURM cluster with a runtime of 720 minutes, a specific constraint (i.e. cascadelake), specific partitions (i.e. 12hours or 5days), 26 threads, 26 CPUs per task, and 250000MB of memory.
-
-These resource definitions are specific to the Weng Lab's SLURM cluster. If you are running the pipeline on your own cluster, you'll need to adjust these values accordingly. We recommend consulting the [snakemake-executor-plugin-slurm documentation](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html) for further information.
-
-### Pipeline Steps
-
-The pipeline executes the following steps for each sample:
-
-1. **DRAGEN Index** — Build a DRAGEN hash table from the reference FASTA.
-2. **Unmapped BAM** — Convert paired-end FASTQs to an unmapped BAM (uBAM) with read group metadata extracted from FASTQ headers.
-3. **Quality Yield Metrics** — Collect quality yield metrics on the uBAM.
-4. **Alignment** — Align reads to the reference genome using DRAGEN-OS and merge with the uBAM via Picard `MergeBamAlignment`.
-5. **Unsorted Read Group BAM Quality Metrics** — Collect insert size and other quality metrics on the unsorted aligned BAM.
-6. **Mark Duplicates** — Mark duplicate reads using Picard `MarkDuplicates`.
-7. **Sort BAM** — Coordinate-sort and index the deduplicated BAM.
-8. **Cross-Check Fingerprints** — Verify sample identity consistency across read groups.
-9. **Check Contamination** — Estimate cross-sample contamination using VerifyBamID.
-10. **Base Recalibration** — Run GATK `BaseRecalibrator` across sequence groups in parallel.
-11. **Gather BQSR Reports** — Merge per-group recalibration reports.
-12. **Apply BQSR** — Apply base quality score recalibration across sequence groups in parallel.
-13. **Gather Recalibrated BAMs** — Merge per-group recalibrated BAMs into a single BAM.
-14. **Read Group BAM Quality Metrics** — Collect alignment summary and GC bias metrics on the final BAM.
-15. **Aggregation Metrics** — Collect comprehensive QC metrics (alignment, insert size, sequencing artifacts, GC bias, quality distribution).
-16. **Read Group Checksum** — Calculate an MD5 checksum for the final BAM.
-17. **Convert to CRAM** — Convert the final BAM to CRAM format for archival storage.
-18. **Check Prevalidation** — Extract duplication and chimerism values to determine validation stringency.
-19. **Validate SAM File** — Validate the CRAM file with Picard `ValidateSamFile`.
-20. **Calibrate DRAGEN STR Model** — Calibrate the DRAGEN short tandem repeat model using GATK `CalibrateDragstrModel`.
-21. **Scatter Interval List** — Scatter calling intervals for parallelized variant calling.
-22. **HaplotypeCaller** — Call germline variants per scatter interval in DRAGEN mode, producing per-interval gVCFs and BAMout files.
-23. **DRAGEN Hard Filter gVCF** — Apply DRAGEN hard quality filtering to per-interval gVCFs.
-24. **Merge gVCFs** — Merge per-interval hard-filtered gVCFs into a single sample gVCF.
-25. **Sort BAMout / Merge BAMout** — Sort and merge per-interval BAMout files.
-26. **Reblock** — Reblock the merged gVCF using GATK `ReblockGVCF` to reduce file size and standardize GQ bands.
-27. **Validate gVCF** — Validate the final reblocked gVCF.
-28. **Collect Variant Calling Metrics** — Collect variant calling detail and summary metrics.
-
-### Running the Pipeline
-
-With the hard part out of the way, you can now run the pipeline:
-
-```bash
-snakemake --workflow-profile profile/slurm
-```
-
-> [!NOTE]
-> It is recommended that you run the pipeline in dry run mode first (add the `-n` flag). Also note that `snakemake` must be ran in the root of this repository.
-
-This will run the pipeline and produce all outputs to the directory specified by `results_dir` in the config file (default: `results`).
-
-### Outputs
-
-The pipeline produces results organized under the `results/` directory:
-
-| Directory | Key Outputs |
+| Key | Meaning |
 |---|---|
-| `results/dragen_reference/` | DRAGEN hash table index for the reference genome |
-| `results/unmapped_bam/` | Unmapped BAMs (uBAMs) with read group metadata |
-| `results/collect_quality_yield_metrics/` | Quality yield metrics for each uBAM |
-| `results/unmapped_bam_to_aligned/` | Aligned BAMs (merged with uBAM) |
-| `results/collect_unsorted_readgroup_bam_quality_metrics/` | Insert size metrics and histogram PDFs |
-| `results/mark_duplicates/` | Deduplicated BAMs, duplication metrics |
-| `results/sort_bam/` | Coordinate-sorted BAMs, BAM indexes, MD5 checksums |
-| `results/cross_check_fingerprints/` | Fingerprint cross-check metrics |
-| `results/check_contamination/` | VerifyBamID `.selfSM` contamination estimates |
-| `results/base_recalibrator/` | Per-sequence-group BQSR recalibration tables |
-| `results/gather_bqsr_reports/` | Merged BQSR recalibration reports |
-| `results/apply_bqsr/` | Per-sequence-group recalibrated BAMs |
-| `results/gather_recalibrated_bams/` | Final merged recalibrated BAMs |
-| `results/collect_readgroup_bam_quality_metrics/` | Read group alignment summary and GC bias metrics |
-| `results/collect_aggregation_metrics/` | Comprehensive QC: alignment, insert size, GC bias, sequencing artifacts, quality distribution |
-| `results/calculate_readgroup_checksum/` | BAM MD5 checksums |
-| `results/convert_to_cram/` | CRAM files and CRAM MD5 checksums |
-| `results/check_prevalidation/` | Duplication and chimerism value files |
-| `results/validate_sam_file/` | Picard `ValidateSamFile` validation reports |
-| `results/calibrate_dragen_str_model/` | DRAGEN STR model `.dragstr` files |
-| `results/scatter_interval_list/` | Scattered interval lists for parallel variant calling |
-| `results/haplotype_caller/` | Per-interval gVCFs (`.g.vcf.gz`) and BAMout files |
-| `results/dragen_hardfilter_gvcf/` | DRAGEN hard-filtered per-interval gVCFs |
-| `results/merge_gvcfs/` | Merged per-sample gVCFs |
-| `results/sort_bamout/` | Sorted per-interval BAMout files |
-| `results/merge_bamout/` | Merged BAMout BAMs |
-| `results/reblock/` | Reblocked gVCFs (`.rb.g.vcf.gz`), ready for joint genotyping |
-| `results/validate_gvcf/` | gVCF validation signals |
-| `results/collect_variant_calling_metrics/` | Variant calling detail and summary metrics |
+| `samples` | Sample sheet path. |
+| `outdir` | Results root. |
+| `run_id` | Run name. Outputs go under `results/<run_id>/`. |
+| `pixi_env` | Environment of `workflow/envs/pixi.toml` that non-GATK rules use. |
+| `tmp_dir` | Scratch for the aligned BAM, BQSR input copies, the CRAM reference cache and the dbSNP copy. |
+| `picard_tmp_dir` | Picard scratch. It MUST NOT sit on a `noexec` mount, as `/tmp` is on some hosts. |
+| `references.fasta` | Reference genome FASTA. |
+| `references.haplotype_database_file` | Haplotype map for CrosscheckFingerprints. |
+| `references.known_indel_sites_vcfs` | Known indel VCFs for BaseRecalibrator. |
+| `references.dbsnp_vcf` | dbSNP VCF for BaseRecalibrator, ValidateVariants and variant calling metrics. |
+| `references.calling_interval_list` | Calling regions to scatter. |
+| `references.evaluation_interval_list` | Target intervals for variant calling metrics. |
+| `references.sequence_grouping` | One BQSR group per line, tab-separated contigs. |
+| `references.str_table_file` | STR table for CalibrateDragstrModel. |
+| `references.contamination_sites` | VerifyBamID `.UD`, `.bed` and `.mu` resources. |
+| `platform` | Read group platform. Default `Generic`. |
+| `compression_level` | BAM compression level. Default `2`. |
+| `unmap_contaminant_reads` | MergeBamAlignment `UNMAP_CONTAMINANT_READS`. Default `false`. |
+| `lod_threshold` | CrosscheckFingerprints LOD threshold. Default `-20.0`. |
+| `cross_check_fingerprints_by` | CrosscheckFingerprints `CROSSCHECK_BY`. Default `READGROUP`. |
+| `contamination_underestimation_factor` | Divisor of the FREEMIX that `check_contamination` logs. Default `0.75`. |
+| `bin_base_qualities` | Quantize recalibrated qualities to 10, 20 and 30. |
+| `somatic` | With `bin_base_qualities`, also quantize to 30, 40 and 50. |
+| `scatter_interval_list.scatter_count` | Number of HaplotypeCaller scatters. |
+| `scatter_interval_list.break_bands_at_multiples_of` | IntervalListTools `BREAK_BANDS_AT_MULTIPLES_OF`. |
+
+## Steps
+
+References, in `reference.smk`:
+
+- `reference_index` writes the FASTA index, sequence dictionary and chromosome sizes.
+- `dragen_index` builds the DRAGEN hash table.
+- `scatter_interval_list` splits the calling regions with IntervalListTools.
+
+Alignment, in `align.smk`:
+
+- `unmapped_bam` converts the FASTQs to a uBAM with FastqToSam.
+- `unmapped_bam_to_aligned` aligns the uBAM with DRAGMAP and merges the alignments back with MergeBamAlignment.
+- `mark_duplicates` runs MarkDuplicates on the queryname-grouped BAM.
+- `sort_bam` coordinate-sorts and indexes it.
+
+BQSR, in `bqsr.smk`:
+
+- `base_recalibration` runs BaseRecalibrator once per sequence group.
+- `gather_bqsr_reports` merges the group reports.
+- `apply_bqsr` recalibrates each sequence group.
+- `gather_recalibrated_bams` concatenates the groups into the final BAM.
+
+CRAM, in `cram.smk`:
+
+- `convert_to_cram` writes a CRAM 3.0 file, its md5 and its index.
+- `check_prevalidation` extracts the duplication and chimerism rates.
+- `validate_sam_file` runs ValidateSamFile. It skips mate validation when
+  duplication exceeds 0.30 or chimerism exceeds 0.15.
+
+Calling, in `call.smk`:
+
+- `calibrate_dragen_str_model` fits the DRAGstr model.
+- `haplotype_caller` calls each scatter in DRAGEN mode. VerifyBamID's FREEMIX is its `-contamination`.
+- `dragen_hardfilter_gvcf` flags `QUAL < 10.4139` as `DRAGENHardQUAL`.
+- `merge_gvcfs` merges the scatters.
+- `sort_bamout` and `merge_bamout` sort and merge the HaplotypeCaller bamouts.
+- `reblock` runs ReblockGVCF.
+- `validate_gvcf` runs ValidateVariants and touches `<sample>.OK`.
+
+QC, in `qc.smk`:
+
+- `collect_quality_yield_metrics` runs on the uBAM.
+- `collect_unsorted_readgroup_bam_quality_metrics` runs on the merged, unsorted BAM.
+- `cross_check_fingerprints` checks that all read groups come from one individual.
+- `check_contamination` estimates contamination with VerifyBamID.
+- `collect_readgroup_bam_quality_metrics`, `collect_aggregation_metrics` and
+  `calculate_readgroup_checksum` run on the final BAM.
+- `collect_variant_calling_metrics` runs on the reblocked gVCF.
+
+## Outputs
+
+Each sample writes to `results/<run_id>/<sample>/<step>/`. The interval scatter
+depends on the run config, so it goes to `results/<run_id>/scatter_interval_list/`.
+The DRAGEN hash table does not depend on the run. It goes to
+`results/refs/dragen_reference/`. Logs and benchmarks go to
+`logs/<run_id>/<step>/` and `benchmarks/<run_id>/<step>/`, one file per sample.
+To list one step across samples, glob it: `results/<run_id>/*/reblock/*.rb.g.vcf.gz`.
+
+| Step directory | Key outputs |
+|---|---|
+| `unmapped_bam/` | uBAM with read group metadata |
+| `collect_quality_yield_metrics/` | Quality yield metrics of the uBAM |
+| `unmapped_bam_to_aligned/` | Aligned BAM merged with the uBAM |
+| `collect_unsorted_readgroup_bam_quality_metrics/` | Insert size metrics and histogram PDF |
+| `mark_duplicates/` | Duplicate-marked BAM, duplication metrics |
+| `sort_bam/` | Coordinate-sorted BAM, index, md5 |
+| `cross_check_fingerprints/` | Fingerprint metrics |
+| `check_contamination/` | VerifyBamID `.selfSM` |
+| `base_recalibrator/` | Per-group recalibration tables |
+| `gather_bqsr_reports/` | Merged recalibration table |
+| `apply_bqsr/` | Per-group recalibrated BAMs |
+| `gather_recalibrated_bams/` | Final BAM |
+| `collect_readgroup_bam_quality_metrics/` | Read group alignment summary and GC bias metrics |
+| `collect_aggregation_metrics/` | Alignment, insert size, artifact, GC bias and quality distribution metrics |
+| `calculate_readgroup_checksum/` | Read group checksum |
+| `convert_to_cram/` | CRAM, its index and md5 |
+| `check_prevalidation/` | Duplication and chimerism values |
+| `validate_sam_file/` | ValidateSamFile report |
+| `calibrate_dragen_str_model/` | DRAGstr model |
+| `haplotype_caller/` | Per-scatter gVCFs and bamouts |
+| `dragen_hardfilter_gvcf/` | Hard-filtered per-scatter gVCFs |
+| `merge_gvcfs/` | Merged gVCF |
+| `sort_bamout/`, `merge_bamout/` | Sorted per-scatter and merged bamouts |
+| `reblock/` | Reblocked gVCF (`.rb.g.vcf.gz`), ready for joint genotyping |
+| `validate_gvcf/` | `<sample>.OK` once ValidateVariants passes |
+| `collect_variant_calling_metrics/` | Variant calling detail and summary metrics |
+
+## Environment
+
+The launcher env (`pixi.toml` at the root) has Snakemake main and its plugins
+for pixi deployment and SLURM. The rule envs live in a second pixi workspace,
+`workflow/envs/`. Its `pixi.lock` pins every package. `default` runs most rules.
+`gatk` runs GATK 4.6.2.0 on OpenJDK 17. pixi MUST be on `PATH`.
+
+The tool versions match the images that produced the production results:
+`clarity001/wgs-smk:latest` as pulled on 2025-12-22 and
+`us.gcr.io/broad-gatk/gatk:latest` as pulled on 2025-07-31. bioconda's DRAGMAP
+and VerifyBamID differ from that image's builds in code. So `default` builds
+both from source at the image's commits, with the image's compiler flags.
+`pixi install --all` in `workflow/envs/` compiles them once. Without it, the
+first job compiles them.
+
+Add a dependency with `pixi add <pkg>` in `workflow/envs/`. After a hand edit,
+run `pixi lock` there (rules use `locked=True`). Any change to the manifest or
+lock reruns every rule. So does moving the workdir, because the env hash includes
+the workspace's absolute path.
+
+## Conventions
+
+The workflow follows the
+[Nextstrain Snakemake style guide](https://docs.nextstrain.org/en/latest/reference/snakemake-style-guide.html)
+and [Snakemake's best practices](https://snakemake.readthedocs.io/en/stable/snakefiles/best_practices.html):
+
+- No `run:` blocks. Custom logic lives in `workflow/scripts/`, called from `shell:`.
+- Raw, triple-quoted `shell` blocks (`r"""`), one option per line.
+- Every interpolation uses `:q` quoting, except inside a double-quoted string
+  such as GATK's `--java-options`.
+- Config reaches `shell` through `params:` (a `lambda`), never directly.
+- `input:` and `output:` are literal path strings. All paths are relative.
+- Rules tee logs to file and terminal (`exec &> >(tee {log:q})`).
+- Every rule has `log:` and `benchmark:`. Each names its pixi env in `software:`.
+- Docstrings follow numpydoc. `pixi run lint` checks the scripts with ruff and
+  `numpydoc lint`. Neither tool parses `.smk` files.
 
 ## References
 
-> Köster, J., Mölder, F., Jablonski, K. P., Letcher, B., Hall, M. B., Tomkins-Tinch, C. H., Sochat, V., Forster, J., Lee, S., Twardziok, S. O., Kanitz, A., Wilm, A., Holtgrewe, M., Rahmann, S., & Nahnsen, S. _Sustainable data analysis with Snakemake_. F1000Research, 10:33, 10, 33, **2021**. https://doi.org/10.12688/f1000research.29032.2.
+Behera, Sairam, Severine Catreux, Massimiliano Rossi, et al. 2024. “Comprehensive Genome Analysis and Variant Detection at Scale Using DRAGEN.” Nature Biotechnology 43 (7): 1177–91. https://doi.org/10.1038/s41587-024-02382-1.
 
-> https://github.com/broadinstitute/warp/blob/develop/pipelines/wdl/dna_seq/germline/single_sample/wgs/WholeGenomeGermlineSingleSample.wdl
+Danecek, Petr, James K. Bonfield, Jennifer Liddle, et al. 2021. “Twelve Years of SAMtools and BCFtools.” GigaScience 10 (2): giab008. https://doi.org/10.1093/gigascience/giab008.
 
-> https://github.com/broadinstitute/warp/blob/develop/tasks/wdl/UnmappedBamToAlignedBam.wdl
+McKenna, Aaron, Matthew Hanna, Eric Banks, et al. 2010. “The Genome Analysis Toolkit: A MapReduce Framework for Analyzing next-Generation DNA Sequencing Data.” Genome Research 20 (9): 1297–303. https://doi.org/10.1101/gr.107524.110.
 
-> https://github.com/broadinstitute/warp/blob/develop/tasks/wdl/BamToGvcf.wdl
+Mölder, Felix, Kim Philipp Jablonski, Brice Letcher, et al. 2021. “Sustainable Data Analysis with Snakemake.” F1000Research 10 (April): 33. https://doi.org/10.12688/f1000research.29032.2.
+
+Warp: Warp Analysis Research Pipelines. n.d. Github. Accessed October 10, 2026. https://github.com/broadinstitute/warp.
+
+Zhang, Fan, Matthew Flickinger, Sarah A. Gagliano Taliun, et al. 2020. “Ancestry-Agnostic Estimation of DNA Sample Contamination from Sequence Reads.” Genome Research 30 (2): 185–94. https://doi.org/10.1101/gr.246934.118.
 
 ## Questions
 
