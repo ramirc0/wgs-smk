@@ -30,6 +30,7 @@ workflow/
     pixi.toml            rule envs (pixi workspace): default and gatk
     dragmap/             source package: DRAGMAP at the production commit
     verifybamid2/        source package: VerifyBamID at the production commit
+.tests/integration/      ENCODE end-to-end test: config + sample sheet
 profiles/
   local/config.yaml      local execution
   slurm/config.yaml      SLURM (per-rule resources, retried with more memory)
@@ -53,6 +54,20 @@ The SLURM profile holds Weng Lab cluster settings, such as partitions, excluded
 nodes and the `cascadelake` constraint. Adapt them for another cluster with the
 [SLURM executor docs](https://snakemake.github.io/snakemake-plugin-catalog/plugins/executor/slurm.html).
 Tune `set-resources` from the `benchmarks/<run_id>/` TSVs after a first run.
+
+## Integration test
+
+`.tests/integration/` runs three ENCODE whole genome samples end to end on full
+GRCh38. Two are EN-TEx donors sequenced on a NextSeq 500. The third is A549 on a
+HiSeq X Ten. Its inputs live on the Weng Lab cluster, so it runs only there.
+
+```bash
+snakemake --profile profiles/slurm --configfile .tests/integration/config.yaml
+```
+
+Outputs go under `results/encode-integration/`. Compare the EN-TEx genotypes with
+ENCODE's GRCh38 variant calls for the same donors: `ENCFF501WAL` (ENCSR410ALS)
+and `ENCFF568LEP` (ENCSR456SNK).
 
 ## Inputs
 

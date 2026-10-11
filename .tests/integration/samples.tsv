@@ -1,0 +1,7 @@
+# ENCODE whole genome sequencing, one FASTQ pair each, 151 bp paired-end.
+# ENCSR410ALS: EN-TEx transverse colon, male, NextSeq 500. ENCSR456SNK: EN-TEx
+# transverse colon, female, NextSeq 500. ENCSR521ELB: A549, HiSeq X Ten.
+sample_id	r1	r2
+ENCSR410ALS_rep1	/data/projects/encode/data/ENCSR410ALS/ENCFF311XUH.fastq.gz	/data/projects/encode/data/ENCSR410ALS/ENCFF148MZW.fastq.gz
+ENCSR456SNK_rep1	/data/projects/encode/data/ENCSR456SNK/ENCFF580WYM.fastq.gz	/data/projects/encode/data/ENCSR456SNK/ENCFF822QBP.fastq.gz
+ENCSR521ELB_rep1	/data/projects/encode/data/ENCSR521ELB/ENCFF122NPY.fastq.gz	/data/projects/encode/data/ENCSR521ELB/ENCFF846WHK.fastq.gz

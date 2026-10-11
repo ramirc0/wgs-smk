@@ -10,6 +10,7 @@ pixi run lint                                # ruff check, ruff format --check, 
 pixi install --all --manifest-path workflow/envs/pixi.toml  # once per checkout; compiles the source packages
 pixi run snakemake -n -p --profile profiles/local
 pixi run snakemake --profile profiles/slurm
+pixi run snakemake --profile profiles/slurm --configfile .tests/integration/config.yaml  # ENCODE end-to-end test
 ```
 
 ## Two pixi workspaces
@@ -31,7 +32,6 @@ pixi run snakemake --profile profiles/slurm
 ## Outputs must not drift
 
 - Pins match `clarity001/wgs-smk:latest` pulled 2025-12-22 and `us.gcr.io/broad-gatk/gatk:latest` pulled 2025-07-31. Their SIFs are in `/data/zusers/ramirezc/wgs-smk/workflow/rules/envs/`. Docker Hub `:latest` and the old repo Dockerfile do not match them.
-- `picard.jar` is byte-identical to the image's. bioconda's GATK jar has the image's classes compiled by a newer javac.
 - Tag `pre-template` is the last commit before the template port.
 - README.md "Known issues" lists legacy bugs kept on purpose. A fix changes outputs and needs the user's approval.
 
@@ -49,10 +49,5 @@ pixi run snakemake --profile profiles/slurm
 
 ## Verifying a change
 
-No test suite. Diff against `pre-template` on a real sample:
-
-1. Take the first 10M read pairs of EG100001.
-2. Run `git archive pre-template` with the two production SIFs, linked in a scratch `apptainer-prefix` under the md5 of their image URLs.
-3. Run this workflow with the same per-rule threads.
-4. Compare `samtools view` records and headers without `@PG`, `bcftools view` records and headers without `##GATKCommandLine`, and Picard metrics without `#` lines. BQSR tables, `.selfSM`, interval lists, `.dragstr` and the validation report MUST match as text.
-5. md5 files and PDFs differ: they embed paths and dates.
+Run the ENCODE integration test. For the EN-TEx samples, compare genotypes with ENCODE's GRCh38 variant calls (`ENCFF501WAL`, `ENCFF568LEP`).
+Pipeline changes MUST NOT change outputs on MOHD data. Diff a changed step against the previous commit on a MOHD sample.
