@@ -40,7 +40,8 @@ def fastq_to_sam_command(mem_mb, tmp_dir, sample, platform, r1, r2, output):
     platform : str
         Read group platform.
     r1 : str
-        Gzipped R1 FASTQ. Its first header MUST hold 8 colon-separated fields.
+        Gzipped R1 FASTQ. Its first read name MUST hold 7 or 8 colon-separated
+        fields.
     r2 : str
         Gzipped R2 FASTQ.
     output : str
@@ -54,9 +55,11 @@ def fastq_to_sam_command(mem_mb, tmp_dir, sample, platform, r1, r2, output):
     with gzip.open(r1, "rt") as f:
         first_line = f.readline()
     whitespace = first_line.index(" ")
-    [instrument_id, _, flowcell_id, lane_no, _, _, _, _] = (
-        first_line[:whitespace].lstrip("@").split(":")
-    )
+    fields = first_line[:whitespace].lstrip("@").split(":")
+    # Casava 1.8 names have 7 fields. MOHD's add an 8th, the UMI.
+    if len(fields) not in (7, 8):
+        raise ValueError(f"Expected 7 or 8 colon-separated fields: {first_line!r}")
+    instrument_id, _, flowcell_id, lane_no = fields[:4]
     return [
         "picard",
         f"-Xms{mem_mb}m",

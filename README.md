@@ -58,8 +58,9 @@ Tune `set-resources` from the `benchmarks/<run_id>/` TSVs after a first run.
 
 The sample sheet is a TSV with a header row. `sample_id` names the sample. `r1`
 and `r2` are its gzipped paired-end FASTQs. Lines that start with `#` are
-comments. Each `sample_id` MUST be unique. The first R1 header MUST hold 8
-colon-separated fields. They set the read group of every read.
+comments. Each `sample_id` MUST be unique. The first R1 read name MUST hold 7
+(Casava 1.8) or 8 (with a UMI) colon-separated fields. They set the read group
+of every read.
 
 Download the references into `resources/` (gitignored):
 
@@ -241,8 +242,8 @@ A fix changes outputs.
   `rstrip(".selfSM")`, which strips trailing characters, not the suffix. With
   the `.preBqsr.selfSM` name it stops at the `r` of `preBqsr`.
 - `unmapped_bam.py` builds one read group from the first R1 header. Every read
-  gets it, even when a FASTQ mixes lanes or flowcells. The header MUST hold 8
-  colon-separated fields. The library is always `MOHD-<sample>`.
+  gets it, even when a FASTQ mixes lanes or flowcells. The library is always
+  `MOHD-<sample>`.
 - `unmapped_bam_to_aligned` writes the aligned BAM to
   `<tmp_dir>/<sample>.aligned.bam`. Two runs of one sample with the same
   `tmp_dir` share that path. A failed job leaves the file behind.
