@@ -16,7 +16,6 @@ rule base_recalibration:
             "--known-sites", input.known_indel_sites_vcfs
         ),
         intervals=lambda w: repeat_flag("-L", SEQUENCE_GROUPS[int(w.group)]),
-        tmp_dir=lambda w: config["tmp_dir"],
     log:
         f"{LOGDIR}/base_recalibrator/{{sample}}.{{group}}.txt",
     benchmark:
@@ -27,26 +26,12 @@ rule base_recalibration:
         r"""
         exec &> >(tee {log:q})
 
-        BQSR_TMP=$(mktemp -d -p {params.tmp_dir:q} bqsr_tmp.XXXXXX)
-        trap "rm -rf $BQSR_TMP" EXIT
-
-        cp \
-            {input.fasta:q} \
-            {input.fasta_index:q} \
-            {input.fasta_dict:q} \
-            {input.bam:q} \
-            {input.bam_index:q} \
-            "$BQSR_TMP"
-
-        REFERENCE_FASTA="$BQSR_TMP/$(basename {input.fasta:q})"
-        BAM="$BQSR_TMP/$(basename {input.bam:q})"
-
         gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
         -Xlog:gc*:file={log}:time,uptime,level,tags \
         -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
             BaseRecalibrator \
-            -R "$REFERENCE_FASTA" \
-            -I "$BAM" \
+            -R {input.fasta:q} \
+            -I {input.bam:q} \
             --use-original-qualities \
             -O {output:q} \
             --known-sites {input.dbsnp_vcf:q} \

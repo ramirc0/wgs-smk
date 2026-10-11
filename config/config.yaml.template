@@ -2,7 +2,7 @@ samples: config/samples.tsv
 outdir: results
 pixi_env: default
 run_id: default          # outputs go under results/<run_id>/; override per run
-tmp_dir: /tmp            # aligned BAMs, BQSR inputs, CRAM ref cache, dbSNP copy
+tmp_dir: /tmp            # aligned BAMs, CRAM ref cache, dbSNP copy
 picard_tmp_dir: .picard  # Picard scratch; MUST NOT be under a noexec /tmp
 
 references:

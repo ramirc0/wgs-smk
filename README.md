@@ -94,7 +94,7 @@ FASTA when they are missing.
 | `outdir` | Results root. |
 | `run_id` | Run name. Outputs go under `results/<run_id>/`. |
 | `pixi_env` | Environment of `workflow/envs/pixi.toml` that non-GATK rules use. |
-| `tmp_dir` | Scratch for the aligned BAM, BQSR input copies, the CRAM reference cache and the dbSNP copy. |
+| `tmp_dir` | Scratch for the aligned BAM, the CRAM reference cache and the dbSNP copy. |
 | `picard_tmp_dir` | Picard scratch. It MUST NOT sit on a `noexec` mount, as `/tmp` is on some hosts. |
 | `references.fasta` | Reference genome FASTA. |
 | `references.haplotype_database_file` | Haplotype map for CrosscheckFingerprints. |
