@@ -28,6 +28,7 @@ pixi run snakemake --profile profiles/slurm --configfile .tests/integration/conf
 - They build DRAGMAP `c4cb6c94` and VerifyBamID `4b362f51` with GCC 9, the image's CFLAGS/CXXFLAGS/LDFLAGS and Ubuntu GCC's default hardening flags.
 - Conda's default `CPPFLAGS` MUST stay unset. `-DNDEBUG` compiles out the `posix_memalign` that DRAGMAP wraps in `BOOST_ASSERT`.
 - Without a prior `pixi install --all`, the first job compiles both.
+- Jobs activate with `--locked`. Check a relock with `pixi install --all --locked` in `workflow/envs/`. Plain `pixi install` relocks silently.
 
 ## Outputs must not drift
 

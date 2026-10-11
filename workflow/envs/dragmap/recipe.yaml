@@ -30,12 +30,19 @@ build:
 
 requirements:
   build:
-    - gcc_linux-64 ==9.5.0
-    - gxx_linux-64 ==9.5.0
+    - ${{ compiler('c') }}
+    - ${{ compiler('cxx') }}
     - make
   host:
     - libboost-devel 1.84.*
     - zlib
+  # pixi 0.72 locks the compilers' unversioned libgcc/libstdcxx exports but
+  # drops them when it re-checks the lock, so `--locked` activation fails.
+  # libgcc-ng and libstdcxx-ng still come in through the host packages.
+  ignore_run_exports:
+    by_name:
+      - libgcc
+      - libstdcxx
 
 about:
   homepage: https://github.com/Illumina/DRAGMAP
