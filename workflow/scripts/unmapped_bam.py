@@ -119,7 +119,7 @@ def main(argv=None):
         print(e)
         result = 1
     if result != 0:
-        print(f"An error occurded. Exiting with code {result}")
+        print(f"An error occurred. Exiting with code {result}")
     return result
 
 
