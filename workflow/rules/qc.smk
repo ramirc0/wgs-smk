@@ -291,7 +291,7 @@ rule collect_variant_calling_metrics:
             CollectVariantCallingMetrics \
             -INPUT {input.gvcf:q} \
             -OUTPUT {params.prefix:q} \
-            -DBSNP "$TMP_DBSNP_VCF_REHEADER" \
+            --DBSNP "$TMP_DBSNP_VCF_REHEADER" \
             -SEQUENCE_DICTIONARY {input.fasta_dict:q} \
             -TARGET_INTERVALS {input.evaluation_interval_list:q} \
             -GVCF_INPUT true

@@ -41,6 +41,7 @@ pixi run snakemake --profile profiles/slurm --configfile .tests/integration/conf
 - Inside a double-quoted shell string, `:q` embeds literal quotes. GATK `--java-options` and MergeBamAlignment's `PROGRAM_GROUP_COMMAND_LINE` interpolate without it.
 - `-Xlog:gc*:file={log}` makes the JVM rotate the tee'd log. The rule output ends in `{log}.0`, the GC log in `{log}`.
 - Picard scratch goes to `picard_tmp_dir`, never `/tmp`. Picard fails on a `noexec` `/tmp`.
+- The bioconda `picard` wrapper passes any `-D*` or `-XX*` argument to the JVM. Write such Picard flags with two dashes (`--DBSNP`).
 - `* attempt` in `profiles/slurm/config.yaml` is intentional. JVM heaps follow `mem_mb`, so a retry also doubles them.
 - `set-threads` sets `OMP_NUM_THREADS` to the job's threads. Before the port it was 1.
 - `reference_index` takes the FASTA as `ancient()`. Existing index files stay even when the FASTA is newer. A regenerated `.dict` would change BAM `@SQ` lines.
