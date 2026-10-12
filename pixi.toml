@@ -22,5 +22,13 @@ numpydoc = ">=1.11.0,<2"
 [feature.lint.tasks]
 lint = "ruff check && ruff format --check && numpydoc lint workflow/scripts/*.py"
 
+[feature.test.dependencies]
+python = "3.13.*"
+pytest = ">=8"
+
+[feature.test.tasks]
+test = "pytest"
+
 [environments]
 lint = { features = ["lint"], no-default-feature = true }
+test = { features = ["test"], no-default-feature = true }

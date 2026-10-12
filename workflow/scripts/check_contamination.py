@@ -46,22 +46,24 @@ def check_self_sm(path, underestimation_factor):
     Returns
     -------
     int
-        1 if a row has zero likelihoods, else 0.
+        0 for one row with nonzero likelihoods, else 1.
     """
-    return_code = 0
     with Path(path).open("r") as self_sm:
-        reader = csv.DictReader(self_sm, delimiter="\t")
-        for row in reader:
-            if float(row["FREELK0"]) == 0 and float(row["FREELK1"]) == 0:
-                # Zero likelihoods mean no data: a very shallow BAM, or a BAM
-                # aligned to another reference build than the VCF.
-                print(
-                    "Found zero likelihoods. Bam is either very-very shallow, or aligned to the wrong reference (relative to the vcf).",
-                    file=sys.stderr,
-                )
-                return_code = 1
+        rows = list(csv.DictReader(self_sm, delimiter="\t"))
+    if len(rows) != 1:
+        print(f"Found {len(rows)} rows in {path}. Expected exactly 1.", file=sys.stderr)
+        return 1
+    row = rows[0]
+    if float(row["FREELK0"]) == 0 and float(row["FREELK1"]) == 0:
+        # Zero likelihoods mean no data: a very shallow BAM, or a BAM aligned
+        # to another reference build than the VCF.
+        print(
+            "Found zero likelihoods. Bam is either very-very shallow, or aligned to the wrong reference (relative to the vcf).",
+            file=sys.stderr,
+        )
+        return 1
     print(float(row["FREEMIX"]) / underestimation_factor, file=sys.stderr)
-    return return_code
+    return 0
 
 
 def main(argv=None):
@@ -75,7 +77,7 @@ def main(argv=None):
     Returns
     -------
     int
-        Exit code: 0 on success, 1 if the likelihoods are zero.
+        Exit code: 0 on success, 1 if the .selfSM check fails.
     """
     args = build_parser().parse_args(argv)
 
@@ -87,7 +89,7 @@ def main(argv=None):
         "--NumThread",
         str(args.threads),
         "--Output",
-        args.output.rstrip(".selfSM"),
+        args.output.removesuffix(".selfSM"),
         "--BamFile",
         args.bam,
         "--Reference",
@@ -105,7 +107,7 @@ def main(argv=None):
     print("Verifying output")
     result = check_self_sm(args.output, args.underestimation_factor)
     if result != 0:
-        print(f"An error occurded. Exiting with code {result}")
+        print(f"An error occurred. Exiting with code {result}")
     return result
 
 

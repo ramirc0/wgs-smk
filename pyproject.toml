@@ -2,9 +2,17 @@
 [tool.ruff.lint]
 extend-select = ["D"]
 
+# Test names say what they check.
+[tool.ruff.lint.per-file-ignores]
+".tests/unit/*" = ["D103"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
 # "all" minus the codes after it: extended summary, examples, see also.
 [tool.numpydoc_validation]
 checks = ["all", "ES01", "EX01", "SA01"]
+
+[tool.pytest.ini_options]
+testpaths = [".tests/unit"]
+pythonpath = ["workflow/scripts"]
