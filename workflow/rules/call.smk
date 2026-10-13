@@ -82,7 +82,8 @@ rule haplotype_caller:
 
 rule dragen_hardfilter_gvcf:
     input:
-        f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
+        gvcf=f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
+        tbi=f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz.tbi",
     output:
         gvcf=temp(
             f"{OUTDIR}/{{sample}}/dragen_hardfilter_gvcf/{{scatter}}.hardfiltered.g.vcf.gz"
@@ -104,7 +105,7 @@ rule dragen_hardfilter_gvcf:
 
         gatk --java-options "{params.java}" \
             VariantFiltration \
-            -V {input:q} \
+            -V {input.gvcf:q} \
             --filter-expression "QUAL < 10.4139" \
             --filter-name "DRAGENHardQUAL" \
             -O {output.gvcf:q}
