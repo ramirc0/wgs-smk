@@ -15,6 +15,7 @@ rule all:
                 f"{OUTDIR}/{{sample}}/collect_quality_yield_metrics/{{sample}}.metrics",
                 f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_metrics",
                 f"{OUTDIR}/{{sample}}/cross_check_fingerprints/{{sample}}.metrics",
+                f"{OUTDIR}/{{sample}}/check_contamination/{{sample}}.preBqsr.selfSM",
                 f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}.alignment_summary_metrics",
                 f"{OUTDIR}/{{sample}}/calculate_readgroup_checksum/{{sample}}.bam.md5",
                 f"{OUTDIR}/{{sample}}/validate_sam_file/{{sample}}.validation_report",

@@ -36,7 +36,6 @@ rule haplotype_caller:
         **REFERENCE,
         bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
         interval_list=lambda w: SCATTERED_INTERVAL_LIST.format(scatter=int(w.scatter)),
-        contamination=f"{OUTDIR}/{{sample}}/check_contamination/{{sample}}.preBqsr.selfSM",
         dragen_str_model=f"{OUTDIR}/{{sample}}/calibrate_dragen_str_model/{{sample}}.dragstr",
     output:
         gvcf=f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
@@ -54,15 +53,13 @@ rule haplotype_caller:
         r"""
         exec &> >(tee {log:q})
 
-        CONTAMINATION=$(awk 'NR==2 {{print $7}}' {input.contamination:q})
-
         gatk --java-options "{params.java} -Dsamjdk.compression_level={params.compression_level} -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
             HaplotypeCaller \
             -R {input.fasta:q} \
             -I {input.bam:q} \
             -L {input.interval_list:q} \
             -O {output.gvcf:q} \
-            -contamination "$CONTAMINATION" \
+            -contamination 0 \
             -G StandardAnnotation \
             -G StandardHCAnnotation \
             -G AS_StandardAnnotation \
