@@ -25,11 +25,11 @@ REFERENCE = {
     "fasta_index": f"{REFERENCE_FASTA}.fai",
     "fasta_dict": str(Path(REFERENCE_FASTA).with_suffix(".dict")),
 }
-CHROMSIZES = str(Path(REFERENCE_FASTA).with_suffix(".chromsizes"))
 DRAGEN_REFERENCE = f"{REFDIR}/dragen_reference"
 COVERAGE_INTERVAL_LIST = f"{REFDIR}/coverage.interval_list"
 EVALUATION_INTERVAL_LIST = f"{REFDIR}/evaluation.interval_list"
 STR_TABLE = f"{REFDIR}/str_table.tsv"
+DBSNP = f"{REFDIR}/dbsnp.vcf.gz"
 
 SCATTER_COUNT = config["scatter_interval_list"]["scatter_count"]
 SCATTERS = range(1, SCATTER_COUNT + 1)

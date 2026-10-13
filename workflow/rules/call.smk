@@ -177,7 +177,8 @@ rule validate_gvcf:
     input:
         **REFERENCE,
         gvcf=f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz",
-        dbsnp_vcf=REFS["dbsnp_vcf"],
+        dbsnp=DBSNP,
+        dbsnp_index=f"{DBSNP}.tbi",
         calling_interval_list=REFS["calling_interval_list"],
     output:
         f"{OUTDIR}/{{sample}}/validate_gvcf/{{sample}}.OK",
@@ -200,7 +201,7 @@ rule validate_gvcf:
             -L {input.calling_interval_list:q} \
             -gvcf \
             --validation-type-to-exclude ALLELES \
-            --dbsnp {input.dbsnp_vcf:q} \
+            --dbsnp {input.dbsnp:q} \
             --no-overlaps
         touch {output:q}
         """

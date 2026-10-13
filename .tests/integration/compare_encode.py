@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-RESOURCES = Path("/data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources")
+STATIC = Path("/data/zusers/ramirezc/static/hg38")
 ENCODE_DATA = Path("/data/projects/encode/data")
 # Sample ID of the integration run -> ENCODE's released GRCh38 variant calls.
 ENCODE_CALLS = {
@@ -34,12 +34,16 @@ def build_parser():
     p.add_argument("--run", default="results/encode-integration", help="Run directory.")
     p.add_argument(
         "--fasta",
-        default=str(RESOURCES / "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"),
+        default=str(
+            STATIC / "genome/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta"
+        ),
         help="Reference FASTA of both call sets.",
     )
     p.add_argument(
         "--intervals",
-        default=str(RESOURCES / "wgs_calling_regions.hg38.interval_list"),
+        default=str(
+            STATIC / "broad-references/v0/wgs_calling_regions.hg38.interval_list"
+        ),
         help="Calling regions, as a Picard interval list.",
     )
     return p

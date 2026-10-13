@@ -2,17 +2,16 @@ samples: .tests/integration/samples.tsv
 outdir: results
 pixi_env: default
 run_id: encode-integration
-tmp_dir: /tmp
 picard_tmp_dir: .picard
 
 references:
-  fasta: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta
-  haplotype_database_file: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/Homo_sapiens_assembly38.haplotype_database.txt
-  dbsnp_vcf: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/Homo_sapiens_assembly38.dbsnp138.vcf
-  calling_interval_list: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/wgs_calling_regions.hg38.interval_list
-  evaluation_interval_list: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/wgs_evaluation_regions.hg38.interval_list
-  coverage_interval_list: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/wgs_coverage_regions.hg38.interval_list
-  contamination_sites: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/1000g.phase3.100k.b38.vcf.gz.dat
+  fasta: /data/zusers/ramirezc/static/hg38/genome/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta
+  haplotype_database_file: /data/zusers/ramirezc/static/hg38/broad-references/v0/Homo_sapiens_assembly38.haplotype_database.txt
+  dbsnp_vcf: /data/zusers/ramirezc/static/hg38/broad-references/v0/Homo_sapiens_assembly38.dbsnp138.vcf.gz
+  calling_interval_list: /data/zusers/ramirezc/static/hg38/broad-references/v0/wgs_calling_regions.hg38.interval_list
+  evaluation_interval_list: /data/zusers/ramirezc/static/hg38/broad-references/v0/wgs_evaluation_regions.hg38.interval_list
+  coverage_interval_list: /data/zusers/ramirezc/static/hg38/broad-references/v0/wgs_coverage_regions.hg38.interval_list
+  contamination_sites: /data/zusers/ramirezc/static/hg38/broad-references/v0/contamination-resources/1000g/1000g.phase3.100k.b38.vcf.gz.dat
 
 platform: Illumina
 compression_level: 2

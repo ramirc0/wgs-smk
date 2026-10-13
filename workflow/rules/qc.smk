@@ -327,8 +327,8 @@ rule collect_variant_calling_metrics:
     input:
         **REFERENCE,
         gvcf=f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz",
-        dbsnp_vcf=REFS["dbsnp_vcf"],
-        chromsizes=CHROMSIZES,
+        dbsnp=DBSNP,
+        dbsnp_index=f"{DBSNP}.tbi",
         evaluation_interval_list=EVALUATION_INTERVAL_LIST,
     output:
         variant_calling_detail_metrics=f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}.variant_calling_detail_metrics",
@@ -336,7 +336,6 @@ rule collect_variant_calling_metrics:
     params:
         java=java_options(),
         prefix=f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}",
-        tmp_dir=lambda w: config["tmp_dir"],
     log:
         f"{LOGDIR}/collect_variant_calling_metrics/{{sample}}.txt",
     benchmark:
@@ -347,28 +346,12 @@ rule collect_variant_calling_metrics:
         r"""
         exec &> >(tee {log:q})
 
-        METRICS_TMP=$(mktemp -d -p {params.tmp_dir:q} variant_calling_metrics.XXXXXX)
-        trap "rm -rf $METRICS_TMP" EXIT
-
-        TMP_DBSNP_VCF_BGZ="$METRICS_TMP/dbsnp.vcf.gz"
-        TMP_DBSNP_VCF_REHEADER="$METRICS_TMP/dbsnp.reheader.vcf.gz"
-
-        echo "Fixing dbSNP VCF header..."
-        bgzip -@ {threads:q} -c {input.dbsnp_vcf:q} > "$TMP_DBSNP_VCF_BGZ"
-        bcftools index "$TMP_DBSNP_VCF_BGZ"
-        bcftools reheader \
-            -f {input.fasta_index:q} \
-            -o "$TMP_DBSNP_VCF_REHEADER" \
-            "$TMP_DBSNP_VCF_BGZ"
-        bcftools index -t "$TMP_DBSNP_VCF_REHEADER"
-
-        echo "Running CollectVariantCallingMetrics..."
         picard \
             {params.java:q} \
             CollectVariantCallingMetrics \
             -INPUT {input.gvcf:q} \
             -OUTPUT {params.prefix:q} \
-            --DBSNP "$TMP_DBSNP_VCF_REHEADER" \
+            --DBSNP {input.dbsnp:q} \
             -SEQUENCE_DICTIONARY {input.fasta_dict:q} \
             -TARGET_INTERVALS {input.evaluation_interval_list:q} \
             -GVCF_INPUT true

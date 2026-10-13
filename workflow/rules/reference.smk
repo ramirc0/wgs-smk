@@ -10,7 +10,6 @@ rule reference_index:
     output:
         fasta_index=REFERENCE["fasta_index"],
         fasta_dict=REFERENCE["fasta_dict"],
-        chromsizes=CHROMSIZES,
     log:
         f"{LOGDIR}/reference_index.txt",
     benchmark:
@@ -23,7 +22,6 @@ rule reference_index:
 
         samtools faidx {input:q}
         samtools dict {input:q} -o {output.fasta_dict:q}
-        cut -f1,2 {output.fasta_index:q} > {output.chromsizes:q}
         """
 
 
@@ -72,6 +70,29 @@ rule compose_str_table:
             ComposeSTRTableFile \
             -R {input.fasta:q} \
             -O {output:q}
+        """
+
+
+# The Broad VCF's header lists the contigs of Homo_sapiens_assembly38.
+rule prepare_dbsnp:
+    input:
+        fasta_index=REFERENCE["fasta_index"],
+        vcf=REFS["dbsnp_vcf"],
+    output:
+        vcf=DBSNP,
+        tbi=f"{DBSNP}.tbi",
+    log:
+        f"{LOGDIR}/prepare_dbsnp.txt",
+    benchmark:
+        f"{BENCHDIR}/prepare_dbsnp.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        bcftools reheader -f {input.fasta_index:q} -o {output.vcf:q} {input.vcf:q}
+        tabix -p vcf {output.vcf:q}
         """
 
 
