@@ -16,10 +16,7 @@ references:
   evaluation_interval_list: resources/wgs_evaluation_regions.hg38.interval_list
   sequence_grouping: resources/sequence_grouping.txt
   str_table_file: resources/GRCh38_no_alt_analysis_set_GCA_000001405.15.str_table.tsv
-  contamination_sites:
-    ud: resources/1000g.phase3.100k.b38.vcf.gz.dat.UD
-    bed: resources/1000g.phase3.100k.b38.vcf.gz.dat.bed
-    mu: resources/1000g.phase3.100k.b38.vcf.gz.dat.mu
+  contamination_sites: resources/1000g.phase3.100k.b38.vcf.gz.dat
 
 platform: Illumina
 compression_level: 2

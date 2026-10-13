@@ -22,7 +22,7 @@ rule base_recalibration:
     benchmark:
         f"{BENCHDIR}/base_recalibrator/{{sample}}.{{group}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})
@@ -56,7 +56,7 @@ rule gather_bqsr_reports:
     benchmark:
         f"{BENCHDIR}/gather_bqsr_reports/{{sample}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})
@@ -95,7 +95,7 @@ rule apply_bqsr:
     benchmark:
         f"{BENCHDIR}/apply_bqsr/{{sample}}.{{group}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})

@@ -15,7 +15,7 @@ rule calibrate_dragen_str_model:
     benchmark:
         f"{BENCHDIR}/calibrate_dragen_str_model/{{sample}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})
@@ -49,7 +49,7 @@ rule haplotype_caller:
     benchmark:
         f"{BENCHDIR}/haplotype_caller/{{sample}}.{{scatter}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})
@@ -95,7 +95,7 @@ rule dragen_hardfilter_gvcf:
     benchmark:
         f"{BENCHDIR}/dragen_hardfilter_gvcf/{{sample}}.{{scatter}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})
@@ -205,7 +205,7 @@ rule reblock:
     benchmark:
         f"{BENCHDIR}/reblock/{{sample}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})
@@ -239,7 +239,7 @@ rule validate_gvcf:
     benchmark:
         f"{BENCHDIR}/validate_gvcf/{{sample}}.tsv",
     software:
-        GATK_ENV
+        SOFTWARE_ENV
     shell:
         r"""
         exec &> >(tee {log:q})

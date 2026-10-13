@@ -37,7 +37,6 @@ SCATTERED_INTERVAL_LIST = (
 
 # The workspace path is relative to the rule file. Every rule file sits in rules/.
 SOFTWARE_ENV = pixi(workspace="../envs", env=config["pixi_env"], locked=True)
-GATK_ENV = pixi(workspace="../envs", env="gatk", locked=True)
 
 # GKL and snappy extract native libraries to java.io.tmpdir, and a noexec /tmp
 # blocks them. Picard moves java.io.tmpdir to its TMP_DIR only after GKL loads.

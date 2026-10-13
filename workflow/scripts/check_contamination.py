@@ -21,9 +21,11 @@ def build_parser():
     p.add_argument("--output", required=True, help="The .selfSM file to write.")
     p.add_argument("--bam", required=True, help="Coordinate-sorted, indexed BAM.")
     p.add_argument("--reference", required=True, help="Reference FASTA.")
-    p.add_argument("--ud", required=True, help="VerifyBamID .UD resource.")
-    p.add_argument("--bed", required=True, help="VerifyBamID .bed resource.")
-    p.add_argument("--mu", required=True, help="VerifyBamID .mu resource.")
+    p.add_argument(
+        "--svd-prefix",
+        required=True,
+        help="Prefix of the VerifyBamID .UD, .bed and .mu resources.",
+    )
     p.add_argument(
         "--underestimation-factor",
         type=float,
@@ -82,7 +84,8 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
 
     cmd = [
-        "VerifyBamID",
+        # bioconda's wrapper passes arguments through only with --SVDPrefix.
+        "verifybamid2",
         "--Verbose",
         "--NumPC",
         "4",
@@ -94,12 +97,8 @@ def main(argv=None):
         args.bam,
         "--Reference",
         args.reference,
-        "--UDPath",
-        args.ud,
-        "--MeanPath",
-        args.mu,
-        "--BedPath",
-        args.bed,
+        "--SVDPrefix",
+        args.svd_prefix,
     ]
     print(f"Running command:\n\n{shlex.join(cmd)}", flush=True)
     subprocess.check_call(cmd)

@@ -27,7 +27,7 @@ def test_verifybamid_output_prefix_drops_only_the_suffix(tmp_path, monkeypatch, 
     output = tmp_path / f"{name}.selfSM"
     output.write_text(HEADER + ROW)
     argv = ["--threads", "4", "--output", str(output), "--bam", "b", "--reference"]
-    argv += ["r", "--ud", "u", "--bed", "b", "--mu", "m", "--underestimation-factor"]
+    argv += ["r", "--svd-prefix", "p", "--underestimation-factor"]
     assert check_contamination.main([*argv, "0.75"]) == 0
     cmd = calls[0]
     assert cmd[cmd.index("--Output") + 1] == str(tmp_path / name)

@@ -16,10 +16,7 @@ references:
   evaluation_interval_list: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/wgs_evaluation_regions.hg38.interval_list
   sequence_grouping: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/sequence_grouping.txt
   str_table_file: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/GRCh38_no_alt_analysis_set_GCA_000001405.15.str_table.tsv
-  contamination_sites:
-    ud: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/1000g.phase3.100k.b38.vcf.gz.dat.UD
-    bed: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/1000g.phase3.100k.b38.vcf.gz.dat.bed
-    mu: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/1000g.phase3.100k.b38.vcf.gz.dat.mu
+  contamination_sites: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/1000g.phase3.100k.b38.vcf.gz.dat
 
 platform: Illumina
 compression_level: 2

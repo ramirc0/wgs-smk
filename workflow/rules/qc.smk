@@ -104,12 +104,11 @@ rule check_contamination:
         **REFERENCE,
         bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
         bam_index=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam.bai",
-        ud=REFS["contamination_sites"]["ud"],
-        bed=REFS["contamination_sites"]["bed"],
-        mu=REFS["contamination_sites"]["mu"],
+        contamination_sites=multiext(REFS["contamination_sites"], ".UD", ".bed", ".mu"),
     output:
         f"{OUTDIR}/{{sample}}/check_contamination/{{sample}}.preBqsr.selfSM",
     params:
+        contamination_sites=lambda w: REFS["contamination_sites"],
         contamination_underestimation_factor=lambda w: config.get(
             "contamination_underestimation_factor", 0.75
         ),
@@ -128,9 +127,7 @@ rule check_contamination:
             --output {output:q} \
             --bam {input.bam:q} \
             --reference {input.fasta:q} \
-            --ud {input.ud:q} \
-            --bed {input.bed:q} \
-            --mu {input.mu:q} \
+            --svd-prefix {params.contamination_sites:q} \
             --underestimation-factor {params.contamination_underestimation_factor:q}
         """
 
