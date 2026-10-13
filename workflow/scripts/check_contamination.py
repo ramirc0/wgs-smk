@@ -17,7 +17,6 @@ def build_parser():
         Parser for the check_contamination.py flags.
     """
     p = argparse.ArgumentParser(description="Run VerifyBamID on a sorted BAM.")
-    p.add_argument("--threads", type=int, required=True, help="VerifyBamID threads.")
     p.add_argument("--output", required=True, help="The .selfSM file to write.")
     p.add_argument("--bam", required=True, help="Coordinate-sorted, indexed BAM.")
     p.add_argument("--reference", required=True, help="Reference FASTA.")
@@ -89,8 +88,6 @@ def main(argv=None):
         "--Verbose",
         "--NumPC",
         "4",
-        "--NumThread",
-        str(args.threads),
         "--Output",
         args.output.removesuffix(".selfSM"),
         "--BamFile",

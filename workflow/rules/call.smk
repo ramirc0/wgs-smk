@@ -21,7 +21,7 @@ rule calibrate_dragen_str_model:
         exec &> >(tee {log:q})
 
         gatk --java-options \
-        "{params.java} -Dgatk_stacktrace_on_user_exception=true -Dsamjdk.reference_fasta={input.fasta}" \
+        "{params.java} -DGATK_STACKTRACE_ON_USER_EXCEPTION=true -Dsamjdk.reference_fasta={input.fasta}" \
             CalibrateDragstrModel \
             -R {input.fasta:q} \
             -I {input.bam:q} \
@@ -65,7 +65,6 @@ rule haplotype_caller:
             -G AS_StandardAnnotation \
             --dragen-mode \
             --dragstr-params-path {input.dragen_str_model:q} \
-            --native-pair-hmm-threads {threads:q} \
             -GQB 10 \
             -GQB 20 \
             -GQB 30 \

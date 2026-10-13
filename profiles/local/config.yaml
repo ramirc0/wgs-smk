@@ -27,7 +27,7 @@ set-threads:
   sort_bam: 16
   cross_check_fingerprints: 2
   base_recalibration: 2
-  check_contamination: 13
+  check_contamination: 4
   gather_bqsr_reports: 2
   apply_bqsr: 2
   gather_recalibrated_bams: 2
@@ -39,7 +39,7 @@ set-threads:
   convert_to_cram: 16
   check_prevalidation: 1
   validate_sam_file: 2
-  calibrate_dragen_str_model: 26
+  calibrate_dragen_str_model: 4
   scatter_interval_list: 1
   haplotype_caller: 4
   dragen_hardfilter_gvcf: 2

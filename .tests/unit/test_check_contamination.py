@@ -26,7 +26,7 @@ def test_verifybamid_output_prefix_drops_only_the_suffix(tmp_path, monkeypatch, 
     monkeypatch.setattr(check_contamination.subprocess, "check_call", calls.append)
     output = tmp_path / f"{name}.selfSM"
     output.write_text(HEADER + ROW)
-    argv = ["--threads", "4", "--output", str(output), "--bam", "b", "--reference"]
+    argv = ["--output", str(output), "--bam", "b", "--reference"]
     argv += ["r", "--svd-prefix", "p", "--underestimation-factor"]
     assert check_contamination.main([*argv, "0.75"]) == 0
     cmd = calls[0]

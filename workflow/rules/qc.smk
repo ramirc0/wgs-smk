@@ -123,7 +123,6 @@ rule check_contamination:
         exec &> >(tee {log:q})
 
         python {workflow.basedir:q}/scripts/check_contamination.py \
-            --threads {threads:q} \
             --output {output:q} \
             --bam {input.bam:q} \
             --reference {input.fasta:q} \
