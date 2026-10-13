@@ -28,5 +28,5 @@ contamination_underestimation_factor: 0.75
 bin_base_qualities: true
 somatic: false
 scatter_interval_list:
-  scatter_count: 10
-  break_bands_at_multiples_of: 100000
+  scatter_count: 50
+  break_bands_at_multiples_of: 1000000
