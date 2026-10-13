@@ -6,7 +6,7 @@ rule calibrate_dragen_str_model:
         **REFERENCE,
         bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
         bam_index=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam.bai",
-        str_table_file=REFS["str_table_file"],
+        str_table=STR_TABLE,
     output:
         f"{OUTDIR}/{{sample}}/calibrate_dragen_str_model/{{sample}}.dragstr",
     params:
@@ -26,7 +26,7 @@ rule calibrate_dragen_str_model:
             CalibrateDragstrModel \
             -R {input.fasta:q} \
             -I {input.bam:q} \
-            -str {input.str_table_file:q} \
+            -str {input.str_table:q} \
             -O {output:q} \
             --threads {threads:q}
         """

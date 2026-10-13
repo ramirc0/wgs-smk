@@ -1,4 +1,5 @@
-# Reference indexes, the DRAGEN hash table and the calling interval scatter.
+# Reference indexes and the files built from them: the DRAGEN hash table, the
+# STR table, reheadered interval lists and dbSNP, and the interval scatter.
 
 
 # Writes beside the FASTA. ancient() keeps existing index files even when the
@@ -47,6 +48,30 @@ rule dragen_index:
             --build-hash-table true \
             --ht-reference {input.fasta:q} \
             --output-directory {output:q}
+        """
+
+
+rule compose_str_table:
+    input:
+        **REFERENCE,
+    output:
+        STR_TABLE,
+    params:
+        java=java_options(),
+    log:
+        f"{LOGDIR}/compose_str_table.txt",
+    benchmark:
+        f"{BENCHDIR}/compose_str_table.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        gatk --java-options "{params.java}" \
+            ComposeSTRTableFile \
+            -R {input.fasta:q} \
+            -O {output:q}
         """
 
 
