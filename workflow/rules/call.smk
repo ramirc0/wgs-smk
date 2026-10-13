@@ -40,7 +40,8 @@ rule haplotype_caller:
         interval_list=lambda w: SCATTERED_INTERVAL_LIST.format(scatter=int(w.scatter)),
         dragen_str_model=f"{OUTDIR}/{{sample}}/calibrate_dragen_str_model/{{sample}}.dragstr",
     output:
-        f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
+        gvcf=temp(f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz"),
+        tbi=temp(f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz.tbi"),
     params:
         compression_level=lambda w: config.get("compression_level", 2),
         java=java_options(),
@@ -59,7 +60,7 @@ rule haplotype_caller:
             -R {input.fasta:q} \
             -I {input.bam:q} \
             -L {input.interval_list:q} \
-            -O {output:q} \
+            -O {output.gvcf:q} \
             -contamination 0 \
             -G StandardAnnotation \
             -G StandardHCAnnotation \
@@ -83,7 +84,12 @@ rule dragen_hardfilter_gvcf:
     input:
         f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
     output:
-        f"{OUTDIR}/{{sample}}/dragen_hardfilter_gvcf/{{scatter}}.hardfiltered.g.vcf.gz",
+        gvcf=temp(
+            f"{OUTDIR}/{{sample}}/dragen_hardfilter_gvcf/{{scatter}}.hardfiltered.g.vcf.gz"
+        ),
+        tbi=temp(
+            f"{OUTDIR}/{{sample}}/dragen_hardfilter_gvcf/{{scatter}}.hardfiltered.g.vcf.gz.tbi"
+        ),
     params:
         java=java_options(),
     log:
@@ -101,7 +107,7 @@ rule dragen_hardfilter_gvcf:
             -V {input:q} \
             --filter-expression "QUAL < 10.4139" \
             --filter-name "DRAGENHardQUAL" \
-            -O {output:q}
+            -O {output.gvcf:q}
         """
 
 
@@ -113,8 +119,8 @@ rule merge_gvcfs:
             allow_missing=True,
         ),
     output:
-        gvcf=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
-        tbi=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz.tbi",
+        gvcf=temp(f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz"),
+        tbi=temp(f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz.tbi"),
     params:
         gvcfs=lambda w, input: repeat_flag("-INPUT", input),
         java=java_options(),

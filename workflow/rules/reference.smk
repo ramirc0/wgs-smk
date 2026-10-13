@@ -123,8 +123,8 @@ rule scatter_interval_list:
     input:
         REFS["calling_interval_list"],
     output:
-        outdir=directory(f"{OUTDIR}/scatter_interval_list"),
-        scattered_intervals=expand(SCATTERED_INTERVAL_LIST, scatter=SCATTERS),
+        outdir=temp(directory(f"{OUTDIR}/scatter_interval_list")),
+        scattered_intervals=temp(expand(SCATTERED_INTERVAL_LIST, scatter=SCATTERS)),
     params:
         scatter_count=lambda w: config["scatter_interval_list"]["scatter_count"],
         break_bands_at_multiples_of=lambda w: config["scatter_interval_list"][

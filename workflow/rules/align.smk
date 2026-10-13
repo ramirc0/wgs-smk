@@ -8,7 +8,7 @@ checkpoint unmapped_bam:
         r1=lambda w: R1_OF[w.sample],
         r2=lambda w: R2_OF[w.sample],
     output:
-        directory(f"{OUTDIR}/{{sample}}/unmapped_bam"),
+        temp(directory(f"{OUTDIR}/{{sample}}/unmapped_bam")),
     params:
         platform=lambda w: config.get("platform", "Generic"),
         compression_level=lambda w: config.get("compression_level", 2),
@@ -48,7 +48,7 @@ rule unmapped_bam_to_aligned:
         ubams=f"{OUTDIR}/{{sample}}/unmapped_bam",
         bam=f"{OUTDIR}/{{sample}}/unmapped_bam/{{unit}}.bam",
     output:
-        f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{unit}}.bam",
+        temp(f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{unit}}.bam"),
     params:
         compression_level=lambda w: config.get("compression_level", 2),
         java=java_options(heap_mb=8000),
@@ -110,7 +110,7 @@ rule gather_unsorted_bam_files:
             shard=read_groups(w.sample)[w.read_group],
         ),
     output:
-        f"{OUTDIR}/{{sample}}/gather_unsorted_bam_files/{{read_group}}.bam",
+        temp(f"{OUTDIR}/{{sample}}/gather_unsorted_bam_files/{{read_group}}.bam"),
     params:
         bams=lambda w, input: repeat_flag("-INPUT", input),
         compression_level=lambda w: config.get("compression_level", 2),
@@ -140,7 +140,7 @@ rule mark_duplicates:
     input:
         lambda w: aligned_read_groups(w.sample).values(),
     output:
-        bam=f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.bam",
+        bam=temp(f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.bam"),
         metrics=f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.metrics",
     params:
         bams=lambda w, input: repeat_flag("-INPUT", input),
