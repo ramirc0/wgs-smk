@@ -222,7 +222,6 @@ rule collect_aggregation_metrics:
         """
 
 
-# `INPUT= x` with a space is the legacy syntax, kept verbatim.
 rule calculate_readgroup_checksum:
     input:
         f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
@@ -243,8 +242,8 @@ rule calculate_readgroup_checksum:
         picard \
             {params.java:q} \
             CalculateReadGroupChecksum \
-            INPUT= {input:q} \
-            OUTPUT= {output:q}
+            -INPUT {input:q} \
+            -OUTPUT {output:q}
         """
 
 
