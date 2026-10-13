@@ -42,6 +42,13 @@ SCATTERED_INTERVAL_LIST = (
 # The workspace path is relative to the rule file. Every rule file sits in rules/.
 SOFTWARE_ENV = pixi(workspace="../envs", env=config["pixi_env"], locked=True)
 
+
+# The pixi plugin installs the env inside each job. Parallel SLURM jobs then race
+# on a fresh or relocked env, so install it once before any job starts.
+onstart:
+    shell("pixi install --manifest-path {workflow.basedir:q}/envs/pixi.toml --all --locked")
+
+
 # GKL and snappy extract native libraries to java.io.tmpdir, and a noexec /tmp
 # blocks them. Picard moves java.io.tmpdir to its TMP_DIR only after GKL loads.
 JAVA_TMP_DIR = config.get("picard_tmp_dir", ".picard")

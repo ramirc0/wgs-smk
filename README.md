@@ -253,7 +253,9 @@ The launcher env (`pixi.toml` at the root) has Snakemake main and its plugins
 for pixi deployment and SLURM. The rule env lives in a second pixi workspace,
 `workflow/envs/`. Its `pixi.lock` pins every package: GATK 4.7.0.0, Picard
 3.5.0, samtools, bcftools and htslib 1.24, DRAGMAP 1.3.0 and VerifyBamID 2.0.3
-from bioconda, on OpenJDK 17. pixi MUST be on `PATH`.
+from bioconda, on OpenJDK 17. pixi MUST be on `PATH`. An `onstart` hook
+installs the env before the first job. Parallel SLURM jobs would otherwise race
+to install it.
 
 DRAGMAP's repository is archived. Its last commit is from 2022. WARP's DRAGEN
 mode has no other mapper.
