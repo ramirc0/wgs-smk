@@ -38,6 +38,7 @@ rule check_prevalidation:
     output:
         duplication_value=f"{OUTDIR}/{{sample}}/check_prevalidation/{{sample}}.duplication_value.txt",
         chimerism_value=f"{OUTDIR}/{{sample}}/check_prevalidation/{{sample}}.chimerism_value.txt",
+        is_outlier_data=f"{OUTDIR}/{{sample}}/check_prevalidation/{{sample}}.is_outlier_data.txt",
     log:
         f"{LOGDIR}/check_prevalidation/{{sample}}.txt",
     benchmark:
@@ -52,7 +53,8 @@ rule check_prevalidation:
             --duplication-metrics {input.duplication_metrics:q} \
             --alignment-summary-metrics {input.agg_alignment_summary_metrics:q} \
             --duplication-value {output.duplication_value:q} \
-            --chimerism-value {output.chimerism_value:q}
+            --chimerism-value {output.chimerism_value:q} \
+            --is-outlier-data {output.is_outlier_data:q}
         """
 
 
@@ -63,9 +65,9 @@ rule check_prevalidation:
 rule validate_sam_file:
     input:
         **REFERENCE,
-        duplication_value=f"{OUTDIR}/{{sample}}/check_prevalidation/{{sample}}.duplication_value.txt",
-        chimerism_value=f"{OUTDIR}/{{sample}}/check_prevalidation/{{sample}}.chimerism_value.txt",
+        is_outlier_data=f"{OUTDIR}/{{sample}}/check_prevalidation/{{sample}}.is_outlier_data.txt",
         cram=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram",
+        crai=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram.crai",
     output:
         f"{OUTDIR}/{{sample}}/validate_sam_file/{{sample}}.validation_report",
     params:
@@ -80,21 +82,6 @@ rule validate_sam_file:
         r"""
         exec &> >(tee {log:q})
 
-        CHIMERISM_THRESHOLD=0.15
-        DUPLICATION_THRESHOLD=0.30
-
-        OBSERVED_DUPLICATION_VALUE=$(cat {input.duplication_value:q})
-        OBSERVED_CHIMERISM_VALUE=$(cat {input.chimerism_value:q})
-
-        if (( $(echo "$OBSERVED_DUPLICATION_VALUE > $DUPLICATION_THRESHOLD" | bc -l) )) || \
-            (( $(echo "$OBSERVED_CHIMERISM_VALUE > $CHIMERISM_THRESHOLD" | bc -l) )); then
-            echo "Skipping mate validation..."
-            FLAG="-SKIP_MATE_VALIDATION true"
-        else
-            echo "Running mate validation..."
-            FLAG="-SKIP_MATE_VALIDATION false"
-        fi
-
         picard \
             {params.java:q} \
             ValidateSamFile \
@@ -105,6 +92,6 @@ rule validate_sam_file:
             -IGNORE MISSING_TAG_NM \
             -IGNORE MATE_NOT_FOUND \
             -MODE VERBOSE \
-            $FLAG \
+            -SKIP_MATE_VALIDATION "$(cat {input.is_outlier_data:q})" \
             -IS_BISULFITE_SEQUENCED false
         """

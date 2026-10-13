@@ -4,6 +4,12 @@ import argparse
 import csv
 import io
 import subprocess
+from pathlib import Path
+
+# WARP's BamToCram: ValidateSamFile skips mate validation above these, where
+# it can run out of memory.
+MAX_DUPLICATION = 0.30
+MAX_CHIMERISM = 0.15
 
 
 def build_parser():
@@ -29,6 +35,11 @@ def build_parser():
     p.add_argument(
         "--chimerism-value", required=True, help="Text file for PCT_CHIMERAS."
     )
+    p.add_argument(
+        "--is-outlier-data",
+        required=True,
+        help="Text file for `true` or `false`: either rate is above its maximum.",
+    )
     return p
 
 
@@ -50,7 +61,7 @@ def write_last_value(table, column, path):
 
 
 def main(argv=None):
-    """Write PERCENT_DUPLICATION and the PAIR row's PCT_CHIMERAS.
+    """Write PERCENT_DUPLICATION, the PAIR row's PCT_CHIMERAS and the outlier flag.
 
     `grep` selects the rows and fails when a metric header is missing.
 
@@ -85,6 +96,11 @@ def main(argv=None):
 
     write_last_value(duplication, "PERCENT_DUPLICATION", args.duplication_value)
     write_last_value(chimerism, "PCT_CHIMERAS", args.chimerism_value)
+    is_outlier = (
+        float(Path(args.duplication_value).read_text()) > MAX_DUPLICATION
+        or float(Path(args.chimerism_value).read_text()) > MAX_CHIMERISM
+    )
+    Path(args.is_outlier_data).write_text(str(is_outlier).lower())
 
 
 if __name__ == "__main__":
