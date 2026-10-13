@@ -40,8 +40,6 @@ set-threads:
   haplotype_caller: 4
   dragen_hardfilter_gvcf: 2
   merge_gvcfs: 2
-  sort_bamout: 4
-  merge_bamout: 4
   reblock: 2
   validate_gvcf: 2
   collect_variant_calling_metrics: 2
@@ -69,8 +67,6 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   haplotype_caller: {mem_mb: 12000}
   dragen_hardfilter_gvcf: {mem_mb: 4000}
   merge_gvcfs: {mem_mb: 4000}
-  sort_bamout: {mem_mb: 12000}
-  merge_bamout: {mem_mb: 4000}
   reblock: {mem_mb: 8000}
   validate_gvcf: {mem_mb: 8000}
   collect_variant_calling_metrics: {mem_mb: 8000}

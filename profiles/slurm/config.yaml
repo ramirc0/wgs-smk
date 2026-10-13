@@ -42,8 +42,6 @@ set-threads:
   haplotype_caller: 4
   dragen_hardfilter_gvcf: 2
   merge_gvcfs: 2
-  sort_bamout: 4
-  merge_bamout: 4
   reblock: 2
   validate_gvcf: 2
   collect_variant_calling_metrics: 2
@@ -133,11 +131,6 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   merge_gvcfs:
     mem_mb: 4000 * attempt
     constraint: cascadelake
-  sort_bamout:
-    mem_mb: 12000 * attempt
-    constraint: cascadelake
-  merge_bamout:
-    mem_mb: 4000 * attempt
   reblock:
     mem_mb: 8000 * attempt
     slurm_partition: 12hours

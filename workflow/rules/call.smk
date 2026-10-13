@@ -40,8 +40,7 @@ rule haplotype_caller:
         interval_list=lambda w: SCATTERED_INTERVAL_LIST.format(scatter=int(w.scatter)),
         dragen_str_model=f"{OUTDIR}/{{sample}}/calibrate_dragen_str_model/{{sample}}.dragstr",
     output:
-        gvcf=f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
-        bam=f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.bamout.bam",
+        f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
     params:
         compression_level=lambda w: config.get("compression_level", 2),
         java=java_options(),
@@ -60,7 +59,7 @@ rule haplotype_caller:
             -R {input.fasta:q} \
             -I {input.bam:q} \
             -L {input.interval_list:q} \
-            -O {output.gvcf:q} \
+            -O {output:q} \
             -contamination 0 \
             -G StandardAnnotation \
             -G StandardHCAnnotation \
@@ -76,8 +75,7 @@ rule haplotype_caller:
             -GQB 70 \
             -GQB 80 \
             -GQB 90 \
-            -ERC GVCF \
-            -bamout {output.bam:q}
+            -ERC GVCF
         """
 
 
@@ -139,53 +137,6 @@ rule merge_gvcfs:
             -CREATE_INDEX false \
             -OUTPUT {output.gvcf:q}
         tabix -p vcf {output.gvcf:q}
-        """
-
-
-rule sort_bamout:
-    input:
-        f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.bamout.bam",
-    output:
-        bam=f"{OUTDIR}/{{sample}}/sort_bamout/{{scatter}}.bam",
-        md5=f"{OUTDIR}/{{sample}}/sort_bamout/{{scatter}}.bam.md5",
-    log:
-        f"{LOGDIR}/sort_bamout/{{sample}}.{{scatter}}.txt",
-    benchmark:
-        f"{BENCHDIR}/sort_bamout/{{sample}}.{{scatter}}.tsv",
-    software:
-        SOFTWARE_ENV
-    shell:
-        r"""
-        exec &> >(tee {log:q})
-
-        samtools sort -@ {threads:q} -m 2G -o {output.bam:q} {input:q}
-        samtools index {output.bam:q}
-        md5sum {output.bam:q} > {output.md5:q}
-        """
-
-
-rule merge_bamout:
-    input:
-        expand(
-            f"{OUTDIR}/{{sample}}/sort_bamout/{{scatter}}.bam",
-            scatter=SCATTERS,
-            allow_missing=True,
-        ),
-    output:
-        bam=f"{OUTDIR}/{{sample}}/merge_bamout/{{sample}}.bam",
-        bam_index=f"{OUTDIR}/{{sample}}/merge_bamout/{{sample}}.bam.bai",
-    log:
-        f"{LOGDIR}/merge_bamout/{{sample}}.txt",
-    benchmark:
-        f"{BENCHDIR}/merge_bamout/{{sample}}.tsv",
-    software:
-        SOFTWARE_ENV
-    shell:
-        r"""
-        exec &> >(tee {log:q})
-
-        samtools merge -@ {threads:q} -o {output.bam:q} {input:q}
-        samtools index -@ {threads:q} {output.bam:q}
         """
 
 

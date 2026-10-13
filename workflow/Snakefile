@@ -20,7 +20,6 @@ rule all:
                 f"{OUTDIR}/{{sample}}/collect_wgs_metrics/{{sample}}.wgs_metrics",
                 f"{OUTDIR}/{{sample}}/collect_raw_wgs_metrics/{{sample}}.raw_wgs_metrics",
                 f"{OUTDIR}/{{sample}}/validate_sam_file/{{sample}}.validation_report",
-                f"{OUTDIR}/{{sample}}/merge_bamout/{{sample}}.bam",
                 f"{OUTDIR}/{{sample}}/validate_gvcf/{{sample}}.OK",
                 f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}.variant_calling_summary_metrics",
             ],
