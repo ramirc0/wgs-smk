@@ -1,5 +1,6 @@
 # Config, sample sheet, and shared helpers.
 
+import csv
 from pathlib import Path
 
 import polars as pl
@@ -143,7 +144,7 @@ def java_options(heap_mb=None):
 def read_groups(sample):
     """Map each read group of a sample to its uBAM shards.
 
-    Only input functions may call it: it waits for the `unmapped_bam`
+    Only input functions may call it: it waits for the `read_groups`
     checkpoint.
 
     Parameters
@@ -156,11 +157,12 @@ def read_groups(sample):
     dict of str to list of str
         Read group ID to its shard names. Empty for an unsplit read group.
     """
-    ubams = Path(checkpoints.unmapped_bam.get(sample=sample).output[0])
-    return {
-        bam.stem: sorted(shard.stem for shard in (ubams / bam.stem).glob("*.bam"))
-        for bam in sorted(ubams.glob("*.bam"))
-    }
+    table = checkpoints.read_groups.get(sample=sample).output[0]
+    with open(table) as f:
+        return {
+            row["read_group"]: row["shards"].split(",") if row["shards"] else []
+            for row in csv.DictReader(f, delimiter="\t")
+        }
 
 
 def aligned_read_groups(sample):

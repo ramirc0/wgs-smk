@@ -4,10 +4,10 @@
 rule collect_quality_yield_metrics:
     input:
         ubams=f"{OUTDIR}/{{sample}}/unmapped_bam",
-        bam=f"{OUTDIR}/{{sample}}/unmapped_bam/{{read_group}}.bam",
     output:
         f"{OUTDIR}/{{sample}}/collect_quality_yield_metrics/{{read_group}}.metrics",
     params:
+        bam=lambda w, input: f"{input.ubams}/{w.read_group}.bam",
         java=java_options(),
     log:
         f"{LOGDIR}/collect_quality_yield_metrics/{{sample}}.{{read_group}}.txt",
@@ -22,7 +22,7 @@ rule collect_quality_yield_metrics:
         picard \
             {params.java:q} \
             CollectQualityYieldMetrics \
-            -INPUT {input.bam:q} \
+            -INPUT {params.bam:q} \
             -OQ true \
             -OUTPUT {output:q}
         """

@@ -3,10 +3,11 @@
 Each read pair goes to the read group of its flowcell and lane, read name fields
 3 and 4. FastqToSam converts the read groups in parallel. A read group uBAM
 larger than `--cutoff-gib` is also split into files of `--reads-per-file` reads,
-as WARP's SplitLargeReadGroup does.
+as WARP's SplitLargeReadGroup does. `read_groups.tsv` lists the read groups.
 """
 
 import argparse
+import csv
 import os
 import shlex
 import subprocess
@@ -153,6 +154,11 @@ def convert(args, fastq_dir, rg, barcode, pairs):
         Read group barcode. Empty if the FASTQ names have no comment.
     pairs : int
         Read pairs in the read group.
+
+    Returns
+    -------
+    list of str
+        Names of the shards, without `.bam`. Empty if the uBAM is not split.
     """
     fastqs = [Path(fastq_dir, f"{rg}_R{end}.fastq") for end in (1, 2)]
     ubam = Path(args.outdir, f"{rg}.bam")
@@ -185,25 +191,27 @@ def convert(args, fastq_dir, rg, barcode, pairs):
     )
     for fastq in fastqs:
         fastq.unlink()
-    if ubam.stat().st_size > args.cutoff_gib * 2**30:
-        shards = Path(args.outdir, rg)
-        shards.mkdir()
-        picard(
-            f"{args.java_options} -Dsamjdk.compression_level={args.compression_level}",
-            "SplitSamByNumberOfReads",
-            "-INPUT",
-            str(ubam),
-            "-OUTPUT",
-            str(shards),
-            "-SPLIT_TO_N_READS",
-            str(args.reads_per_file),
-            "-TOTAL_READS_IN_INPUT",
-            str(2 * pairs),
-        )
+    if ubam.stat().st_size <= args.cutoff_gib * 2**30:
+        return []
+    shards = Path(args.outdir, rg)
+    shards.mkdir()
+    picard(
+        f"{args.java_options} -Dsamjdk.compression_level={args.compression_level}",
+        "SplitSamByNumberOfReads",
+        "-INPUT",
+        str(ubam),
+        "-OUTPUT",
+        str(shards),
+        "-SPLIT_TO_N_READS",
+        str(args.reads_per_file),
+        "-TOTAL_READS_IN_INPUT",
+        str(2 * pairs),
+    )
+    return sorted(shard.stem for shard in shards.glob("*.bam"))
 
 
 def main(argv=None):
-    """Route the reads by read group, then convert each read group.
+    """Route the reads by read group, convert each one and list them.
 
     Parameters
     ----------
@@ -216,11 +224,15 @@ def main(argv=None):
         read_groups = route(args.r1, args.r2, fastq_dir)
         print(f"Read groups: {read_groups}", flush=True)
         with ThreadPoolExecutor(args.jobs) as pool:
-            for future in [
-                pool.submit(convert, args, fastq_dir, rg, barcode, pairs)
+            shards = {
+                rg: pool.submit(convert, args, fastq_dir, rg, barcode, pairs)
                 for rg, (barcode, pairs) in sorted(read_groups.items())
-            ]:
-                future.result()
+            }
+            with open(Path(args.outdir, "read_groups.tsv"), "w", newline="") as f:
+                writer = csv.writer(f, delimiter="\t")
+                writer.writerow(["read_group", "barcode", "pairs", "shards"])
+                for rg, (barcode, pairs) in sorted(read_groups.items()):
+                    writer.writerow([rg, barcode, pairs, ",".join(shards[rg].result())])
 
 
 if __name__ == "__main__":

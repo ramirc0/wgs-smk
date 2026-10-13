@@ -3,7 +3,7 @@
 
 # One uBAM per read group, `<flowcell>.<lane>`. A large one is also split into
 # `<read group>/shard_<n>.bam`, aligned per shard and gathered.
-checkpoint unmapped_bam:
+rule unmapped_bam:
     input:
         r1=lambda w: R1_OF[w.sample],
         r2=lambda w: R2_OF[w.sample],
@@ -41,15 +41,35 @@ checkpoint unmapped_bam:
         """
 
 
+# The only checkpoint. It keeps the read group list after the uBAMs are gone.
+checkpoint read_groups:
+    input:
+        f"{OUTDIR}/{{sample}}/unmapped_bam",
+    output:
+        f"{OUTDIR}/{{sample}}/read_groups/{{sample}}.tsv",
+    log:
+        f"{LOGDIR}/read_groups/{{sample}}.txt",
+    benchmark:
+        f"{BENCHDIR}/read_groups/{{sample}}.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        cp {input:q}/read_groups.tsv {output:q}
+        """
+
+
 rule unmapped_bam_to_aligned:
     input:
         **REFERENCE,
         dragen_reference=DRAGEN_REFERENCE,
         ubams=f"{OUTDIR}/{{sample}}/unmapped_bam",
-        bam=f"{OUTDIR}/{{sample}}/unmapped_bam/{{unit}}.bam",
     output:
         temp(f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{unit}}.bam"),
     params:
+        bam=lambda w, input: f"{input.ubams}/{w.unit}.bam",
         compression_level=lambda w: config.get("compression_level", 2),
         java=java_options(heap_mb=8000),
     log:
@@ -63,7 +83,7 @@ rule unmapped_bam_to_aligned:
         exec &> >(tee {log:q})
 
         dragen-os \
-            -b {input.bam:q} \
+            -b {params.bam:q} \
             -r {input.dragen_reference:q} \
             --num-threads {threads:q} \
             --interleaved=1 \
@@ -80,7 +100,7 @@ rule unmapped_bam_to_aligned:
             -ATTRIBUTES_TO_REMOVE NM \
             -ATTRIBUTES_TO_REMOVE MD \
             -ALIGNED_BAM /dev/stdin \
-            -UNMAPPED_BAM {input.bam:q} \
+            -UNMAPPED_BAM {params.bam:q} \
             -OUTPUT {output:q} \
             -REFERENCE_SEQUENCE {input.fasta:q} \
             -PAIRED_RUN true \
@@ -94,7 +114,7 @@ rule unmapped_bam_to_aligned:
             -PRIMARY_ALIGNMENT_STRATEGY MostDistant \
             -PROGRAM_RECORD_ID "dragen-os" \
             -PROGRAM_GROUP_VERSION "$(dragen-os --version)" \
-            -PROGRAM_GROUP_COMMAND_LINE "dragen-os -b {input.bam} -r {input.dragen_reference} --interleaved=1" \
+            -PROGRAM_GROUP_COMMAND_LINE "dragen-os -b {params.bam} -r {input.dragen_reference} --interleaved=1" \
             -PROGRAM_GROUP_NAME "dragen-os" \
             -UNMAPPED_READ_STRATEGY COPY_TO_TAG \
             -ALIGNER_PROPER_PAIR_FLAGS true \
