@@ -123,9 +123,11 @@ rule scatter_interval_list:
     input:
         REFS["calling_interval_list"],
     output:
-        outdir=temp(directory(f"{OUTDIR}/scatter_interval_list")),
-        scattered_intervals=temp(expand(SCATTERED_INTERVAL_LIST, scatter=SCATTERS)),
+        temp(expand(SCATTERED_INTERVAL_LIST, scatter=SCATTERS)),
     params:
+        # Not a temp() directory output. With no consumer, Snakemake deletes it
+        # and the lists inside at the next checkpoint.
+        outdir=f"{OUTDIR}/scatter_interval_list",
         scatter_count=lambda w: config["scatter_interval_list"]["scatter_count"],
         break_bands_at_multiples_of=lambda w: config["scatter_interval_list"][
             "break_bands_at_multiples_of"
@@ -146,5 +148,5 @@ rule scatter_interval_list:
             --scatter-count {params.scatter_count:q} \
             --break-bands-at-multiples-of {params.break_bands_at_multiples_of:q} \
             --interval-list {input:q} \
-            --outdir {output.outdir:q}
+            --outdir {params.outdir:q}
         """
