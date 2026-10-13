@@ -38,6 +38,18 @@ def test_route_splits_7_and_8_field_names_by_flowcell_and_lane(tmp_path):
     assert r2[::4] == [f"@{READS[i][0]} 2:N:0:{READS[i][1]}" for i in (1, 3)]
 
 
+def test_route_takes_the_most_common_barcode_of_a_read_group(tmp_path):
+    out = tmp_path / "out"
+    out.mkdir()
+    reads = [
+        ("LH00180:355:23CVNHLT4:8:1101:1000:1000:CCGTAATTG", "GNACTCGTGA+CACTTGAGAA"),
+        ("LH00180:355:23CVNHLT4:8:1101:2000:1000:TTGCCAATG", "GTACTCGTGA+CACTTGAGAA"),
+        ("LH00180:355:23CVNHLT4:8:1101:3000:1000:AACCGGTTA", "GTACTCGTGA+CACTTGAGAA"),
+    ]
+    read_groups = unmapped_bam.route(*write_pair(tmp_path, reads), str(out))
+    assert read_groups == {"23CVNHLT4.8": ("GTACTCGTGA+CACTTGAGAA", 3)}
+
+
 def test_route_rejects_other_name_shapes(tmp_path):
     out = tmp_path / "out"
     out.mkdir()

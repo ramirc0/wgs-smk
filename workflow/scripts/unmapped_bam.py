@@ -17,9 +17,10 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Input: one tab-joined R1 record and R2 record per line. Writes each pair to
-# <dir>/<flowcell>.<lane>_R{1,2}.fastq. The last field of the first R1
-# comment of a read group is its barcode. Prints one line per read group:
-# ID, barcode, pairs.
+# <dir>/<flowcell>.<lane>_R{1,2}.fastq. A read group's barcode is the most
+# common last field of the R1 comment among its first 100,000 pairs, because
+# any one read can carry a no-call. Prints one line per read group: ID,
+# barcode, pairs.
 ROUTE = r"""
 {
     words = split($1, word, " ")
@@ -29,15 +30,23 @@ ROUTE = r"""
         exit 1
     }
     rg = field[3] "." field[4]
-    if (!(rg in pairs)) {
-        n = words > 1 ? split(word[2], comment, ":") : 0
-        barcode[rg] = n ? comment[n] : ""
+    if (++pairs[rg] <= 100000 && words > 1) {
+        n = split(word[2], comment, ":")
+        seen[rg SUBSEP comment[n]]++
     }
-    pairs[rg]++
     print $1 "\n" $2 "\n" $3 "\n" $4 > (dir "/" rg "_R1.fastq")
     print $5 "\n" $6 "\n" $7 "\n" $8 > (dir "/" rg "_R2.fastq")
 }
-END { for (rg in pairs) print rg "\t" barcode[rg] "\t" pairs[rg] }
+END {
+    for (key in seen) {
+        split(key, k, SUBSEP)
+        if (seen[key] > top[k[1]] || (seen[key] == top[k[1]] && k[2] < barcode[k[1]])) {
+            top[k[1]] = seen[key]
+            barcode[k[1]] = k[2]
+        }
+    }
+    for (rg in pairs) print rg "\t" barcode[rg] "\t" pairs[rg]
+}
 """
 
 
