@@ -117,7 +117,8 @@ rule merge_gvcfs:
             allow_missing=True,
         ),
     output:
-        f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
+        gvcf=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
+        tbi=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz.tbi",
     params:
         gvcfs=lambda w, input: repeat_flag("-INPUT", input),
         java=java_options(),
@@ -131,11 +132,15 @@ rule merge_gvcfs:
         r"""
         exec &> >(tee {log:q})
 
+        # The scatters are in genomic order, so GatherVcfs block-copies them.
+        # Block copy cannot index, hence tabix.
         picard \
             {params.java:q} \
-            MergeVcfs \
+            GatherVcfs \
             {params.gvcfs:q} \
-            -OUTPUT {output:q}
+            -CREATE_INDEX false \
+            -OUTPUT {output.gvcf:q}
+        tabix -p vcf {output.gvcf:q}
         """
 
 
@@ -190,6 +195,7 @@ rule reblock:
     input:
         **REFERENCE,
         gvcf=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
+        tbi=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz.tbi",
     output:
         f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz",
     params:
