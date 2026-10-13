@@ -6,10 +6,9 @@ rule convert_to_cram:
         **REFERENCE,
         bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
     output:
-        cram_md5=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram.md5",
         cram=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram",
-    params:
-        tmp_dir=lambda w: config["tmp_dir"],
+        crai=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram.crai",
+        cram_md5=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram.md5",
     log:
         f"{LOGDIR}/convert_to_cram/{{sample}}.txt",
     benchmark:
@@ -20,28 +19,15 @@ rule convert_to_cram:
         r"""
         exec &> >(tee {log:q})
 
-        REF_CACHE_TMP=$(mktemp -d -p {params.tmp_dir:q} ref_cache.XXXXXX)
-        trap "rm -rf $REF_CACHE_TMP" EXIT
-
-        echo "Converting BAM to CRAM..."
         samtools view \
             -@ {threads:q} \
             --output-fmt-option version=3.0 \
             -C \
             -T {input.fasta:q} \
-            {input.bam:q} \
-            | tee {output.cram:q} \
-            | md5sum \
-            | awk '{{print $1}}' \
-            > {output.cram_md5:q}
-
-        echo "Creating a REF_CACHE directory for CRAM indexing..."
-        seq_cache_populate.pl -root "$REF_CACHE_TMP" {input.fasta:q}
-        export REF_PATH=:
-        export REF_CACHE="$REF_CACHE_TMP/%2s/%2s/%s"
-
-        echo "Indexing CRAM..."
-        samtools index -@ {threads:q} {output.cram:q}
+            --write-index \
+            -o {output.cram:q} \
+            {input.bam:q}
+        md5sum {output.cram:q} | awk '{{print $1}}' > {output.cram_md5:q}
         """
 
 
