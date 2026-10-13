@@ -8,6 +8,8 @@ rule calibrate_dragen_str_model:
         str_table_file=REFS["str_table_file"],
     output:
         f"{OUTDIR}/{{sample}}/calibrate_dragen_str_model/{{sample}}.dragstr",
+    params:
+        java=java_options(),
     log:
         f"{LOGDIR}/calibrate_dragen_str_model/{{sample}}.txt",
     benchmark:
@@ -19,7 +21,7 @@ rule calibrate_dragen_str_model:
         exec &> >(tee {log:q})
 
         gatk --java-options \
-        "-Xmx{resources.mem_mb}m -Dgatk_stacktrace_on_user_exception=true -Dsamjdk.reference_fasta={input.fasta}" \
+        "{params.java} -Dgatk_stacktrace_on_user_exception=true -Dsamjdk.reference_fasta={input.fasta}" \
             CalibrateDragstrModel \
             -R {input.fasta:q} \
             -I {input.bam:q} \
@@ -40,8 +42,8 @@ rule haplotype_caller:
         gvcf=f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
         bam=f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.bamout.bam",
     params:
-        picard_tmp_dir=lambda w: config.get("picard_tmp_dir", ".picard"),
         compression_level=lambda w: config.get("compression_level", 2),
+        java=java_options(),
     log:
         f"{LOGDIR}/haplotype_caller/{{sample}}.{{scatter}}.txt",
     benchmark:
@@ -52,12 +54,9 @@ rule haplotype_caller:
         r"""
         exec &> >(tee {log:q})
 
-        PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir:q} picard_tmp.XXXXXX)
-        trap "rm -rf $PICARD_TMP" EXIT
-
         CONTAMINATION=$(awk 'NR==2 {{print $7}}' {input.contamination:q})
 
-        gatk --java-options "-Dorg.xerial.snappy.tempdir=$PICARD_TMP -Djava.io.tmpdir=$PICARD_TMP -Dsamjdk.compression_level={params.compression_level} -Xmx{resources.mem_mb}m -Xms{resources.mem_mb}m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
+        gatk --java-options "{params.java} -Dsamjdk.compression_level={params.compression_level} -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
             HaplotypeCaller \
             -R {input.fasta:q} \
             -I {input.bam:q} \
@@ -89,6 +88,8 @@ rule dragen_hardfilter_gvcf:
         f"{OUTDIR}/{{sample}}/haplotype_caller/{{scatter}}.g.vcf.gz",
     output:
         f"{OUTDIR}/{{sample}}/dragen_hardfilter_gvcf/{{scatter}}.hardfiltered.g.vcf.gz",
+    params:
+        java=java_options(),
     log:
         f"{LOGDIR}/dragen_hardfilter_gvcf/{{sample}}.{{scatter}}.txt",
     benchmark:
@@ -99,7 +100,7 @@ rule dragen_hardfilter_gvcf:
         r"""
         exec &> >(tee {log:q})
 
-        gatk --java-options "-Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
+        gatk --java-options "{params.java}" \
             VariantFiltration \
             -V {input:q} \
             --filter-expression "QUAL < 10.4139" \
@@ -119,6 +120,7 @@ rule merge_gvcfs:
         f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
     params:
         gvcfs=lambda w, input: repeat_flag("-INPUT", input),
+        java=java_options(),
     log:
         f"{LOGDIR}/merge_gvcfs/{{sample}}.txt",
     benchmark:
@@ -130,8 +132,7 @@ rule merge_gvcfs:
         exec &> >(tee {log:q})
 
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             MergeVcfs \
             {params.gvcfs:q} \
             -OUTPUT {output:q}
@@ -191,6 +192,8 @@ rule reblock:
         gvcf=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
     output:
         f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz",
+    params:
+        java=java_options(),
     log:
         f"{LOGDIR}/reblock/{{sample}}.txt",
     benchmark:
@@ -201,7 +204,7 @@ rule reblock:
         r"""
         exec &> >(tee {log:q})
 
-        gatk --java-options "-Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
+        gatk --java-options "{params.java}" \
             ReblockGVCF \
             -R {input.fasta:q} \
             -V {input.gvcf:q} \
@@ -223,6 +226,8 @@ rule validate_gvcf:
         calling_interval_list=REFS["calling_interval_list"],
     output:
         f"{OUTDIR}/{{sample}}/validate_gvcf/{{sample}}.OK",
+    params:
+        java=java_options(),
     log:
         f"{LOGDIR}/validate_gvcf/{{sample}}.txt",
     benchmark:
@@ -233,7 +238,7 @@ rule validate_gvcf:
         r"""
         exec &> >(tee {log:q})
 
-        gatk --java-options "-Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
+        gatk --java-options "{params.java}" \
             ValidateVariants \
             -V {input.gvcf:q} \
             -R {input.fasta:q} \

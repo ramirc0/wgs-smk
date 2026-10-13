@@ -1,6 +1,5 @@
 # Config, sample sheet, and shared helpers.
 
-import math
 from pathlib import Path
 
 import polars as pl
@@ -40,8 +39,10 @@ SCATTERED_INTERVAL_LIST = (
 SOFTWARE_ENV = pixi(workspace="../envs", env=config["pixi_env"], locked=True)
 GATK_ENV = pixi(workspace="../envs", env="gatk", locked=True)
 
-# Picard rules mktemp under this directory, so it must exist before any job runs.
-Path(config.get("picard_tmp_dir", ".picard")).mkdir(parents=True, exist_ok=True)
+# GKL and snappy extract native libraries to java.io.tmpdir, and a noexec /tmp
+# blocks them. Picard moves java.io.tmpdir to its TMP_DIR only after GKL loads.
+JAVA_TMP_DIR = config.get("picard_tmp_dir", ".picard")
+Path(JAVA_TMP_DIR).mkdir(parents=True, exist_ok=True)
 
 
 _SHEET = Path(config["samples"])
@@ -116,3 +117,29 @@ def repeat_flag(flag, values):
         `[flag, value1, flag, value2, ...]`. Interpolate it with `:q`.
     """
     return [token for value in values for token in (flag, str(value))]
+
+
+def java_options(heap_mb=None):
+    """Return a `params:` function that builds a Java rule's JVM options.
+
+    Parameters
+    ----------
+    heap_mb : int, optional
+        Maximum heap in MB. Defaults to 80% of the job's `mem_mb`.
+
+    Returns
+    -------
+    callable
+        Maps the job's wildcards and resources to the options, as a list.
+        Interpolate it with `:q`, or bare inside a double-quoted string.
+    """
+
+    def options(wildcards, resources):
+        heap = heap_mb or int(resources.mem_mb * 0.8)
+        return [
+            f"-Xmx{heap}m",
+            f"-Djava.io.tmpdir={JAVA_TMP_DIR}",
+            f"-Dorg.xerial.snappy.tempdir={JAVA_TMP_DIR}",
+        ]
+
+    return options

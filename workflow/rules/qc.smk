@@ -6,6 +6,8 @@ rule collect_quality_yield_metrics:
         f"{OUTDIR}/{{sample}}/unmapped_bam/{{sample}}.bam",
     output:
         f"{OUTDIR}/{{sample}}/collect_quality_yield_metrics/{{sample}}.metrics",
+    params:
+        java=java_options(),
     log:
         f"{LOGDIR}/collect_quality_yield_metrics/{{sample}}.txt",
     benchmark:
@@ -17,8 +19,7 @@ rule collect_quality_yield_metrics:
         exec &> >(tee {log:q})
 
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             CollectQualityYieldMetrics \
             -INPUT {input:q} \
             -OQ true \
@@ -33,6 +34,7 @@ rule collect_unsorted_readgroup_bam_quality_metrics:
         insert_size_metrics=f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_metrics",
         insert_size_histogram=f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_histogram.pdf",
     params:
+        java=java_options(),
         prefix=f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}",
     log:
         f"{LOGDIR}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.txt",
@@ -45,8 +47,7 @@ rule collect_unsorted_readgroup_bam_quality_metrics:
         exec &> >(tee {log:q})
 
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             CollectMultipleMetrics \
             -INPUT {input:q} \
             -OUTPUT {params.prefix:q} \
@@ -68,6 +69,7 @@ rule cross_check_fingerprints:
     output:
         f"{OUTDIR}/{{sample}}/cross_check_fingerprints/{{sample}}.metrics",
     params:
+        java=java_options(),
         lod_threshold=lambda w: config.get("lod_threshold", -20.0),
         cross_check_fingerprints_by=lambda w: config.get(
             "cross_check_fingerprints_by", "READGROUP"
@@ -83,11 +85,10 @@ rule cross_check_fingerprints:
         exec &> >(tee {log:q})
 
         picard \
+            {params.java:q} \
             -Dsamjdk.buffer_size=131072 \
             -XX:GCTimeLimit=50 \
             -XX:GCHeapFreeLimit=10 \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
             CrosscheckFingerprints \
             -OUTPUT {output:q} \
             -HAPLOTYPE_MAP {input.haplotype_database_file:q} \
@@ -144,6 +145,7 @@ rule collect_readgroup_bam_quality_metrics:
         gc_bias_summary_metrics=f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}.gc_bias.summary_metrics",
         gc_bias_pdf=f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}.gc_bias.pdf",
     params:
+        java=java_options(),
         prefix=f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}",
     log:
         f"{LOGDIR}/collect_readgroup_bam_quality_metrics/{{sample}}.txt",
@@ -156,8 +158,7 @@ rule collect_readgroup_bam_quality_metrics:
         exec &> >(tee {log:q})
 
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             CollectMultipleMetrics \
             -INPUT {input.bam:q} \
             -REFERENCE_SEQUENCE {input.fasta:q} \
@@ -190,6 +191,7 @@ rule collect_aggregation_metrics:
         quality_distribution_pdf=f"{OUTDIR}/{{sample}}/collect_aggregation_metrics/{{sample}}.quality_distribution.pdf",
         quality_distribution_metrics=f"{OUTDIR}/{{sample}}/collect_aggregation_metrics/{{sample}}.quality_distribution_metrics",
     params:
+        java=java_options(),
         prefix=f"{OUTDIR}/{{sample}}/collect_aggregation_metrics/{{sample}}",
     log:
         f"{LOGDIR}/collect_aggregation_metrics/{{sample}}.txt",
@@ -202,8 +204,7 @@ rule collect_aggregation_metrics:
         exec &> >(tee {log:q})
 
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             CollectMultipleMetrics \
             -INPUT {input.bam:q} \
             -REFERENCE_SEQUENCE {input.fasta:q} \
@@ -227,6 +228,8 @@ rule calculate_readgroup_checksum:
         f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
     output:
         f"{OUTDIR}/{{sample}}/calculate_readgroup_checksum/{{sample}}.bam.md5",
+    params:
+        java=java_options(),
     log:
         f"{LOGDIR}/calculate_readgroup_checksum/{{sample}}.txt",
     benchmark:
@@ -238,8 +241,7 @@ rule calculate_readgroup_checksum:
         exec &> >(tee {log:q})
 
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             CalculateReadGroupChecksum \
             INPUT= {input:q} \
             OUTPUT= {output:q}
@@ -257,6 +259,7 @@ rule collect_variant_calling_metrics:
         variant_calling_detail_metrics=f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}.variant_calling_detail_metrics",
         variant_calling_summary_metrics=f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}.variant_calling_summary_metrics",
     params:
+        java=java_options(),
         prefix=f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}",
         tmp_dir=lambda w: config["tmp_dir"],
     log:
@@ -286,8 +289,7 @@ rule collect_variant_calling_metrics:
 
         echo "Running CollectVariantCallingMetrics..."
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             CollectVariantCallingMetrics \
             -INPUT {input.gvcf:q} \
             -OUTPUT {params.prefix:q} \

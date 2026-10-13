@@ -3,6 +3,7 @@
 import argparse
 import glob
 import os
+import shlex
 import subprocess
 import sys
 
@@ -16,7 +17,7 @@ def build_parser():
         Parser for the scatter_interval_list.py flags.
     """
     p = argparse.ArgumentParser(description="Scatter an interval list.")
-    p.add_argument("--mem-mb", type=int, required=True, help="Java heap in MB.")
+    p.add_argument("--java-options", required=True, help="JVM options, one string.")
     p.add_argument("--scatter-count", type=int, required=True, help="Number of pieces.")
     p.add_argument(
         "--break-bands-at-multiples-of",
@@ -49,8 +50,7 @@ def main(argv=None):
 
     cmd = [
         "picard",
-        f"-Xms{args.mem_mb}m",
-        f"-Xmx{args.mem_mb}m",
+        *shlex.split(args.java_options),
         "IntervalListTools",
         "-SCATTER_COUNT",
         str(args.scatter_count),

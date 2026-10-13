@@ -16,8 +16,8 @@ def build_parser():
         Parser for the unmapped_bam.py flags.
     """
     p = argparse.ArgumentParser(description="Convert paired FASTQs to a uBAM.")
-    p.add_argument("--mem-mb", type=int, required=True, help="Java heap in MB.")
-    p.add_argument("--tmp-dir", required=True, help="Picard temporary directory.")
+    p.add_argument("--java-options", required=True, help="JVM options, one string.")
+    p.add_argument("--tmp-dir", required=True, help="Picard TMP_DIR for sort spills.")
     p.add_argument("--sample", required=True, help="Sample ID.")
     p.add_argument("--platform", required=True, help="Read group platform.")
     p.add_argument("--r1", required=True, help="Gzipped R1 FASTQ.")
@@ -26,15 +26,15 @@ def build_parser():
     return p
 
 
-def fastq_to_sam_command(mem_mb, tmp_dir, sample, platform, r1, r2, output):
+def fastq_to_sam_command(java_options, tmp_dir, sample, platform, r1, r2, output):
     """Build the FastqToSam command, with the read group from the first R1 read.
 
     Parameters
     ----------
-    mem_mb : int
-        Java heap in MB.
+    java_options : str
+        JVM options, split like a shell command line.
     tmp_dir : str
-        Picard temporary directory.
+        Picard TMP_DIR for sort spills.
     sample : str
         Sample ID.
     platform : str
@@ -62,11 +62,10 @@ def fastq_to_sam_command(mem_mb, tmp_dir, sample, platform, r1, r2, output):
     instrument_id, _, flowcell_id, lane_no = fields[:4]
     return [
         "picard",
-        f"-Xms{mem_mb}m",
-        f"-Xmx{mem_mb}m",
-        f"-Dorg.xerial.snappy.tempdir={tmp_dir}",
-        f"-Djava.io.tmpdir={tmp_dir}",
+        *shlex.split(java_options),
         "FastqToSam",
+        "-TMP_DIR",
+        tmp_dir,
         "-FASTQ",
         r1,
         "-FASTQ2",
@@ -104,7 +103,7 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
     try:
         cmd = fastq_to_sam_command(
-            args.mem_mb,
+            args.java_options,
             args.tmp_dir,
             args.sample,
             args.platform,

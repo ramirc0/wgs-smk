@@ -82,6 +82,8 @@ rule validate_sam_file:
         cram=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram",
     output:
         f"{OUTDIR}/{{sample}}/validate_sam_file/{{sample}}.validation_report",
+    params:
+        java=java_options(),
     log:
         f"{LOGDIR}/validate_sam_file/{{sample}}.txt",
     benchmark:
@@ -108,8 +110,7 @@ rule validate_sam_file:
         fi
 
         picard \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
+            {params.java:q} \
             ValidateSamFile \
             -INPUT {input.cram:q} \
             -OUTPUT {output:q} \

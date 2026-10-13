@@ -9,7 +9,7 @@ rule unmapped_bam:
         f"{OUTDIR}/{{sample}}/unmapped_bam/{{sample}}.bam",
     params:
         platform=lambda w: config.get("platform", "Generic"),
-        picard_tmp_dir=lambda w: config.get("picard_tmp_dir", ".picard"),
+        java=java_options(),
     log:
         f"{LOGDIR}/unmapped_bam/{{sample}}.txt",
     benchmark:
@@ -20,12 +20,9 @@ rule unmapped_bam:
         r"""
         exec &> >(tee {log:q})
 
-        PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir:q} picard_tmp.XXXXXX)
-        trap "rm -rf $PICARD_TMP" EXIT
-
         python {workflow.basedir:q}/scripts/unmapped_bam.py \
-            --mem-mb {resources.mem_mb:q} \
-            --tmp-dir "$PICARD_TMP" \
+            --java-options="{params.java}" \
+            --tmp-dir "${{TMPDIR:-/tmp}}" \
             --sample {wildcards.sample:q} \
             --platform {params.platform:q} \
             --r1 {input.r1:q} \
@@ -45,7 +42,7 @@ rule unmapped_bam_to_aligned:
         aligned_bam=lambda w: f"{config['tmp_dir']}/{w.sample}.aligned.bam",
         unmap_contaminant_reads=lambda w: config.get("unmap_contaminant_reads", False),
         compression_level=lambda w: config.get("compression_level", 2),
-        picard_tmp_dir=lambda w: config.get("picard_tmp_dir", ".picard"),
+        java=java_options(heap_mb=8000),
     log:
         f"{LOGDIR}/unmapped_bam_to_aligned/{{sample}}.txt",
     benchmark:
@@ -56,9 +53,6 @@ rule unmapped_bam_to_aligned:
         r"""
         exec &> >(tee {log:q})
 
-        PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir:q} picard_tmp.XXXXXX)
-        trap "rm -rf $PICARD_TMP" EXIT
-
         dragen-os \
             -b {input.bam:q} \
             -r {input.dragen_reference:q} \
@@ -68,12 +62,10 @@ rule unmapped_bam_to_aligned:
             | samtools view -@ {threads:q} -h -O BAM - \
             > {params.aligned_bam:q}
         picard \
+            {params.java:q} \
             -Dsamjdk.compression_level={params.compression_level:q} \
-            -Dorg.xerial.snappy.tempdir="$PICARD_TMP" \
-            -Djava.io.tmpdir="$PICARD_TMP" \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
             MergeBamAlignment \
+            -TMP_DIR "${{TMPDIR:-/tmp}}" \
             -VALIDATION_STRINGENCY SILENT \
             -EXPECTED_ORIENTATIONS FR \
             -ATTRIBUTES_TO_RETAIN X0 \
@@ -113,9 +105,8 @@ rule mark_duplicates:
         bam=f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.bam",
         metrics=f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.metrics",
     params:
-        picard_tmp_dir=lambda w: config.get("picard_tmp_dir", ".picard"),
         compression_level=lambda w: config.get("compression_level", 2),
-        mem_mb=lambda w, resources: int(math.ceil(resources.mem_mb * 0.80)),
+        java=java_options(),
     log:
         f"{LOGDIR}/mark_duplicates/{{sample}}.txt",
     benchmark:
@@ -126,16 +117,11 @@ rule mark_duplicates:
         r"""
         exec &> >(tee {log:q})
 
-        PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir:q} picard_tmp.XXXXXX)
-        trap "rm -rf $PICARD_TMP" EXIT
-
         picard \
+            {params.java:q} \
             -Dsamjdk.compression_level={params.compression_level:q} \
-            -Dorg.xerial.snappy.tempdir="$PICARD_TMP" \
-            -Djava.io.tmpdir="$PICARD_TMP" \
-            -Xms{params.mem_mb:q}m \
-            -Xmx{params.mem_mb:q}m \
             MarkDuplicates \
+            -TMP_DIR "${{TMPDIR:-/tmp}}" \
             -INPUT {input:q} \
             -OUTPUT {output.bam:q} \
             -METRICS_FILE {output.metrics:q} \

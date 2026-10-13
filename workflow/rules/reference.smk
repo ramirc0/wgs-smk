@@ -62,6 +62,7 @@ rule scatter_interval_list:
         break_bands_at_multiples_of=lambda w: config["scatter_interval_list"][
             "break_bands_at_multiples_of"
         ],
+        java=java_options(),
     log:
         f"{LOGDIR}/scatter_interval_list.txt",
     benchmark:
@@ -73,7 +74,7 @@ rule scatter_interval_list:
         exec &> >(tee {log:q})
 
         python {workflow.basedir:q}/scripts/scatter_interval_list.py \
-            --mem-mb {resources.mem_mb:q} \
+            --java-options="{params.java}" \
             --scatter-count {params.scatter_count:q} \
             --break-bands-at-multiples-of {params.break_bands_at_multiples_of:q} \
             --interval-list {input:q} \

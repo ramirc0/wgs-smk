@@ -16,6 +16,7 @@ rule base_recalibration:
             "--known-sites", input.known_indel_sites_vcfs
         ),
         intervals=lambda w: repeat_flag("-L", SEQUENCE_GROUPS[int(w.group)]),
+        java=java_options(),
     log:
         f"{LOGDIR}/base_recalibrator/{{sample}}.{{group}}.txt",
     benchmark:
@@ -26,9 +27,7 @@ rule base_recalibration:
         r"""
         exec &> >(tee {log:q})
 
-        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
-        -Xlog:gc*:file={log}:time,uptime,level,tags \
-        -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
+        gatk --java-options "{params.java} -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
             BaseRecalibrator \
             -R {input.fasta:q} \
             -I {input.bam:q} \
@@ -51,6 +50,7 @@ rule gather_bqsr_reports:
         f"{OUTDIR}/{{sample}}/gather_bqsr_reports/{{sample}}.recal_data.csv",
     params:
         reports=lambda w, input: repeat_flag("-I", input),
+        java=java_options(),
     log:
         f"{LOGDIR}/gather_bqsr_reports/{{sample}}.txt",
     benchmark:
@@ -61,7 +61,7 @@ rule gather_bqsr_reports:
         r"""
         exec &> >(tee {log:q})
 
-        gatk --java-options "-Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
+        gatk --java-options "{params.java}" \
             GatherBQSRReports \
             {params.reports:q} \
             -O {output:q}
@@ -89,6 +89,7 @@ rule apply_bqsr:
             else []
         ),
         intervals=lambda w: repeat_flag("-L", SEQUENCE_GROUPS[int(w.group)]),
+        java=java_options(),
     log:
         f"{LOGDIR}/apply_bqsr/{{sample}}.{{group}}.txt",
     benchmark:
@@ -99,10 +100,8 @@ rule apply_bqsr:
         r"""
         exec &> >(tee {log:q})
 
-        gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
-        -Xlog:gc*:file={log}:time,uptime,level,tags \
-        -Dsamjdk.compression_level={params.compression_level} \
-        -Xms{resources.mem_mb}m -Xmx{resources.mem_mb}m" \
+        gatk --java-options "{params.java} -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 \
+        -Dsamjdk.compression_level={params.compression_level}" \
             ApplyBQSR \
             --create-output-bam-md5 \
             --add-output-sam-program-record \
@@ -128,8 +127,8 @@ rule gather_recalibrated_bams:
         f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
     params:
         compression_level=lambda w: config.get("compression_level", 2),
-        picard_tmp_dir=lambda w: config.get("picard_tmp_dir", ".picard"),
         bams=lambda w, input: repeat_flag("-INPUT", input),
+        java=java_options(),
     log:
         f"{LOGDIR}/gather_recalibrated_bams/{{sample}}.txt",
     benchmark:
@@ -140,15 +139,9 @@ rule gather_recalibrated_bams:
         r"""
         exec &> >(tee {log:q})
 
-        PICARD_TMP=$(mktemp -d -p {params.picard_tmp_dir:q} picard_tmp.XXXXXX)
-        trap "rm -rf $PICARD_TMP" EXIT
-
         picard \
+            {params.java:q} \
             -Dsamjdk.compression_level={params.compression_level:q} \
-            -Dorg.xerial.snappy.tempdir="$PICARD_TMP" \
-            -Djava.io.tmpdir="$PICARD_TMP" \
-            -Xms{resources.mem_mb:q}m \
-            -Xmx{resources.mem_mb:q}m \
             GatherBamFiles \
             {params.bams:q} \
             -OUTPUT {output:q} \
