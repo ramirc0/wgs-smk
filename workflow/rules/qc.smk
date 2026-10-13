@@ -329,7 +329,7 @@ rule collect_variant_calling_metrics:
         gvcf=f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz",
         dbsnp_vcf=REFS["dbsnp_vcf"],
         chromsizes=CHROMSIZES,
-        evaluation_interval_list=REFS["evaluation_interval_list"],
+        evaluation_interval_list=EVALUATION_INTERVAL_LIST,
     output:
         variant_calling_detail_metrics=f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}.variant_calling_detail_metrics",
         variant_calling_summary_metrics=f"{OUTDIR}/{{sample}}/collect_variant_calling_metrics/{{sample}}.variant_calling_summary_metrics",

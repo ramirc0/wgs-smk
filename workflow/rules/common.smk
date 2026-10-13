@@ -28,6 +28,7 @@ REFERENCE = {
 CHROMSIZES = str(Path(REFERENCE_FASTA).with_suffix(".chromsizes"))
 DRAGEN_REFERENCE = f"{REFDIR}/dragen_reference"
 COVERAGE_INTERVAL_LIST = f"{REFDIR}/coverage.interval_list"
+EVALUATION_INTERVAL_LIST = f"{REFDIR}/evaluation.interval_list"
 STR_TABLE = f"{REFDIR}/str_table.tsv"
 
 SCATTER_COUNT = config["scatter_interval_list"]["scatter_count"]
