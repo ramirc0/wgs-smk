@@ -66,6 +66,9 @@ def fastq_to_sam_command(java_options, tmp_dir, sample, platform, r1, r2, output
         "FastqToSam",
         "-TMP_DIR",
         tmp_dir,
+        # 10x the default: fewer, larger spills.
+        "-MAX_RECORDS_IN_RAM",
+        "5000000",
         "-FASTQ",
         r1,
         "-FASTQ2",
