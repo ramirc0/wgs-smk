@@ -27,6 +27,7 @@ REFERENCE = {
 }
 CHROMSIZES = str(Path(REFERENCE_FASTA).with_suffix(".chromsizes"))
 DRAGEN_REFERENCE = f"{REFDIR}/dragen_reference"
+COVERAGE_INTERVAL_LIST = f"{REFDIR}/coverage.interval_list"
 
 SCATTER_COUNT = config["scatter_interval_list"]["scatter_count"]
 SCATTERS = range(1, SCATTER_COUNT + 1)
@@ -98,6 +99,7 @@ wildcard_constraints:
     sample=r"[A-Za-z0-9][A-Za-z0-9_.-]*",
     group=r"\d+",
     scatter=r"\d+",
+    kind=r"coverage|evaluation",
 
 
 def repeat_flag(flag, values):

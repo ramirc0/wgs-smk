@@ -50,6 +50,28 @@ rule dragen_index:
         """
 
 
+# Picard checks an interval list's header against the BAM's. The Broad lists
+# carry the dictionary of Homo_sapiens_assembly38.
+rule reheader_interval_list:
+    input:
+        fasta_dict=REFERENCE["fasta_dict"],
+        interval_list=lambda w: REFS[f"{w.kind}_interval_list"],
+    output:
+        f"{REFDIR}/{{kind}}.interval_list",
+    log:
+        f"{LOGDIR}/reheader_interval_list/{{kind}}.txt",
+    benchmark:
+        f"{BENCHDIR}/reheader_interval_list/{{kind}}.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        {{ cat {input.fasta_dict:q}; grep -v '^@' {input.interval_list:q}; }} > {output:q}
+        """
+
+
 # Per run: the scatter count is a run parameter.
 rule scatter_interval_list:
     input:

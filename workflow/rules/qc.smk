@@ -219,6 +219,72 @@ rule collect_aggregation_metrics:
         """
 
 
+rule collect_wgs_metrics:
+    input:
+        **REFERENCE,
+        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        coverage_interval_list=COVERAGE_INTERVAL_LIST,
+    output:
+        f"{OUTDIR}/{{sample}}/collect_wgs_metrics/{{sample}}.wgs_metrics",
+    params:
+        java=java_options(),
+    log:
+        f"{LOGDIR}/collect_wgs_metrics/{{sample}}.txt",
+    benchmark:
+        f"{BENCHDIR}/collect_wgs_metrics/{{sample}}.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        picard \
+            {params.java:q} \
+            CollectWgsMetrics \
+            -INPUT {input.bam:q} \
+            -VALIDATION_STRINGENCY SILENT \
+            -REFERENCE_SEQUENCE {input.fasta:q} \
+            -INCLUDE_BQ_HISTOGRAM true \
+            -INTERVALS {input.coverage_interval_list:q} \
+            -OUTPUT {output:q} \
+            -USE_FAST_ALGORITHM true \
+            -READ_LENGTH 250
+        """
+
+
+rule collect_raw_wgs_metrics:
+    input:
+        **REFERENCE,
+        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        coverage_interval_list=COVERAGE_INTERVAL_LIST,
+    output:
+        f"{OUTDIR}/{{sample}}/collect_raw_wgs_metrics/{{sample}}.raw_wgs_metrics",
+    params:
+        java=java_options(),
+    log:
+        f"{LOGDIR}/collect_raw_wgs_metrics/{{sample}}.txt",
+    benchmark:
+        f"{BENCHDIR}/collect_raw_wgs_metrics/{{sample}}.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        picard \
+            {params.java:q} \
+            CollectRawWgsMetrics \
+            -INPUT {input.bam:q} \
+            -VALIDATION_STRINGENCY SILENT \
+            -REFERENCE_SEQUENCE {input.fasta:q} \
+            -INCLUDE_BQ_HISTOGRAM true \
+            -INTERVALS {input.coverage_interval_list:q} \
+            -OUTPUT {output:q} \
+            -USE_FAST_ALGORITHM true \
+            -READ_LENGTH 250
+        """
+
+
 rule calculate_readgroup_checksum:
     input:
         f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",

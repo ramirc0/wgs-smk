@@ -18,6 +18,8 @@ rule all:
                 f"{OUTDIR}/{{sample}}/check_contamination/{{sample}}.preBqsr.selfSM",
                 f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}.alignment_summary_metrics",
                 f"{OUTDIR}/{{sample}}/calculate_readgroup_checksum/{{sample}}.bam.md5",
+                f"{OUTDIR}/{{sample}}/collect_wgs_metrics/{{sample}}.wgs_metrics",
+                f"{OUTDIR}/{{sample}}/collect_raw_wgs_metrics/{{sample}}.raw_wgs_metrics",
                 f"{OUTDIR}/{{sample}}/validate_sam_file/{{sample}}.validation_report",
                 f"{OUTDIR}/{{sample}}/merge_bamout/{{sample}}.bam",
                 f"{OUTDIR}/{{sample}}/validate_gvcf/{{sample}}.OK",

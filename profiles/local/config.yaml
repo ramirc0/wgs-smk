@@ -34,6 +34,8 @@ set-threads:
   collect_readgroup_bam_quality_metrics: 2
   collect_aggregation_metrics: 2
   calculate_readgroup_checksum: 2
+  collect_wgs_metrics: 2
+  collect_raw_wgs_metrics: 2
   convert_to_cram: 16
   check_prevalidation: 1
   validate_sam_file: 2
@@ -65,6 +67,8 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   collect_readgroup_bam_quality_metrics: {mem_mb: 8000}
   collect_aggregation_metrics: {mem_mb: 8000}
   calculate_readgroup_checksum: {mem_mb: 4000}
+  collect_wgs_metrics: {mem_mb: 8000}
+  collect_raw_wgs_metrics: {mem_mb: 8000}
   convert_to_cram: {mem_mb: 8000}
   check_prevalidation: {mem_mb: 1000}
   validate_sam_file: {mem_mb: 16000}
