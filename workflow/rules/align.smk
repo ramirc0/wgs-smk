@@ -101,6 +101,9 @@ rule mark_duplicates:
         metrics=f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.metrics",
     params:
         compression_level=lambda w: config.get("compression_level", 2),
+        # Tile, x and y are fields 5-7. Picard's default parser takes only 5- or
+        # 7-field names, and MOHD's carry the UMI as an 8th.
+        read_name_regex=lambda w: r"(?:[^:]*:){4}([0-9]+):([0-9]+):([0-9]+)(?::[^:]*)?",
         java=java_options(),
     log:
         f"{LOGDIR}/mark_duplicates/{{sample}}.txt",
@@ -121,6 +124,7 @@ rule mark_duplicates:
             -OUTPUT {output.bam:q} \
             -METRICS_FILE {output.metrics:q} \
             -VALIDATION_STRINGENCY SILENT \
+            -READ_NAME_REGEX {params.read_name_regex:q} \
             -OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
             -ASSUME_SORT_ORDER "queryname" \
             -CLEAR_DT "false" \
