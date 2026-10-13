@@ -2,7 +2,6 @@
 include: "rules/common.smk"
 include: "rules/reference.smk"
 include: "rules/align.smk"
-include: "rules/bqsr.smk"
 include: "rules/cram.smk"
 include: "rules/call.smk"
 include: "rules/qc.smk"

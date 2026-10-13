@@ -86,18 +86,8 @@ if not SAMPLES:
     raise WorkflowError(f"Sample sheet {_SHEET} has no rows.")
 
 
-# One BQSR group per non-empty line: the tab-separated contigs it covers.
-SEQUENCE_GROUPS = [
-    line.strip().split("\t")
-    for line in Path(REFS["sequence_grouping"]).read_text().strip().split("\n")
-    if line.strip()
-]
-GROUPS = range(len(SEQUENCE_GROUPS))
-
-
 wildcard_constraints:
     sample=r"[A-Za-z0-9][A-Za-z0-9_.-]*",
-    group=r"\d+",
     scatter=r"\d+",
     kind=r"coverage|evaluation",
 

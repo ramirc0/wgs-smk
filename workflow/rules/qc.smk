@@ -134,7 +134,7 @@ rule check_contamination:
 rule collect_readgroup_bam_quality_metrics:
     input:
         **REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
     output:
         alignment_metrics=f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}.alignment_summary_metrics",
         gc_bias_detail_metrics=f"{OUTDIR}/{{sample}}/collect_readgroup_bam_quality_metrics/{{sample}}.gc_bias.detail_metrics",
@@ -171,7 +171,7 @@ rule collect_readgroup_bam_quality_metrics:
 rule collect_aggregation_metrics:
     input:
         **REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
     output:
         alignment_summary_metrics=f"{OUTDIR}/{{sample}}/collect_aggregation_metrics/{{sample}}.alignment_summary_metrics",
         error_summary_metrics=f"{OUTDIR}/{{sample}}/collect_aggregation_metrics/{{sample}}.error_summary_metrics",
@@ -221,7 +221,7 @@ rule collect_aggregation_metrics:
 rule collect_wgs_metrics:
     input:
         **REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
         coverage_interval_list=COVERAGE_INTERVAL_LIST,
     output:
         f"{OUTDIR}/{{sample}}/collect_wgs_metrics/{{sample}}.wgs_metrics",
@@ -254,7 +254,7 @@ rule collect_wgs_metrics:
 rule collect_raw_wgs_metrics:
     input:
         **REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
         coverage_interval_list=COVERAGE_INTERVAL_LIST,
     output:
         f"{OUTDIR}/{{sample}}/collect_raw_wgs_metrics/{{sample}}.raw_wgs_metrics",
@@ -286,7 +286,7 @@ rule collect_raw_wgs_metrics:
 
 rule calculate_readgroup_checksum:
     input:
-        f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
     output:
         f"{OUTDIR}/{{sample}}/calculate_readgroup_checksum/{{sample}}.bam.md5",
     params:

@@ -39,7 +39,6 @@ rule unmapped_bam_to_aligned:
     output:
         f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{sample}}.bam",
     params:
-        unmap_contaminant_reads=lambda w: config.get("unmap_contaminant_reads", False),
         compression_level=lambda w: config.get("compression_level", 2),
         java=java_options(heap_mb=8000),
     log:
@@ -88,7 +87,7 @@ rule unmapped_bam_to_aligned:
             -PROGRAM_GROUP_NAME "dragen-os" \
             -UNMAPPED_READ_STRATEGY COPY_TO_TAG \
             -ALIGNER_PROPER_PAIR_FLAGS true \
-            -UNMAP_CONTAMINANT_READS {params.unmap_contaminant_reads:q} \
+            -UNMAP_CONTAMINANT_READS true \
             -ADD_PG_TAG_TO_READS false
         """
 

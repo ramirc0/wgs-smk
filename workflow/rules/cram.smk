@@ -4,7 +4,7 @@
 rule convert_to_cram:
     input:
         **REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
     output:
         cram=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram",
         crai=f"{OUTDIR}/{{sample}}/convert_to_cram/{{sample}}.cram.crai",
@@ -58,10 +58,8 @@ rule check_prevalidation:
         """
 
 
-# MATE_NOT_FOUND is ignored since 2025-12-11. EG100024 had exactly 150 reads
-# whose mate was not found. `samtools fixmate -r` in convert_to_cram could fix
-# it, but EG100024 is the only sample affected, so it is likely an edge case
-# upstream of BQSR.
+# MATE_NOT_FOUND is ignored since 2025-12-11, unlike WARP. EG100024 had exactly
+# 150 reads whose mate was not found, and no other sample had any.
 rule validate_sam_file:
     input:
         **REFERENCE,

@@ -28,11 +28,7 @@ set-threads:
   mark_duplicates: 2
   sort_bam: 16
   cross_check_fingerprints: 2
-  base_recalibration: 2
   check_contamination: 4
-  gather_bqsr_reports: 2
-  apply_bqsr: 2
-  gather_recalibrated_bams: 2
   collect_readgroup_bam_quality_metrics: 2
   collect_aggregation_metrics: 2
   calculate_readgroup_checksum: 2
@@ -83,20 +79,9 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   cross_check_fingerprints:
     mem_mb: 4000 * attempt
     constraint: cascadelake
-  base_recalibration:
-    mem_mb: 8000 * attempt
-    constraint: cascadelake
   check_contamination:
     mem_mb: 8000 * attempt
     constraint: cascadelake
-  gather_bqsr_reports:
-    mem_mb: 4000 * attempt
-    constraint: cascadelake
-  apply_bqsr:
-    mem_mb: 8000 * attempt
-    constraint: cascadelake
-  gather_recalibrated_bams:
-    mem_mb: 4000 * attempt
   collect_readgroup_bam_quality_metrics:
     mem_mb: 8000 * attempt
     constraint: cascadelake

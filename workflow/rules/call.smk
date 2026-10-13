@@ -4,7 +4,8 @@
 rule calibrate_dragen_str_model:
     input:
         **REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
+        bam_index=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam.bai",
         str_table_file=REFS["str_table_file"],
     output:
         f"{OUTDIR}/{{sample}}/calibrate_dragen_str_model/{{sample}}.dragstr",
@@ -34,7 +35,8 @@ rule calibrate_dragen_str_model:
 rule haplotype_caller:
     input:
         **REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/gather_recalibrated_bams/{{sample}}.bam",
+        bam=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam",
+        bam_index=f"{OUTDIR}/{{sample}}/sort_bam/{{sample}}.bam.bai",
         interval_list=lambda w: SCATTERED_INTERVAL_LIST.format(scatter=int(w.scatter)),
         dragen_str_model=f"{OUTDIR}/{{sample}}/calibrate_dragen_str_model/{{sample}}.dragstr",
     output:

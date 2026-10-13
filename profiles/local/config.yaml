@@ -26,11 +26,7 @@ set-threads:
   mark_duplicates: 2
   sort_bam: 16
   cross_check_fingerprints: 2
-  base_recalibration: 2
   check_contamination: 4
-  gather_bqsr_reports: 2
-  apply_bqsr: 2
-  gather_recalibrated_bams: 2
   collect_readgroup_bam_quality_metrics: 2
   collect_aggregation_metrics: 2
   calculate_readgroup_checksum: 2
@@ -59,11 +55,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   mark_duplicates: {mem_mb: 32000}
   sort_bam: {mem_mb: 40000}
   cross_check_fingerprints: {mem_mb: 4000}
-  base_recalibration: {mem_mb: 8000}
   check_contamination: {mem_mb: 8000}
-  gather_bqsr_reports: {mem_mb: 4000}
-  apply_bqsr: {mem_mb: 8000}
-  gather_recalibrated_bams: {mem_mb: 4000}
   collect_readgroup_bam_quality_metrics: {mem_mb: 8000}
   collect_aggregation_metrics: {mem_mb: 8000}
   calculate_readgroup_checksum: {mem_mb: 4000}

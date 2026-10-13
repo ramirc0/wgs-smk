@@ -8,25 +8,18 @@ picard_tmp_dir: .picard
 references:
   fasta: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta
   haplotype_database_file: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/Homo_sapiens_assembly38.haplotype_database.txt
-  known_indel_sites_vcfs:
-    - /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/Homo_sapiens_assembly38.known_indels.vcf.gz
-    - /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
   dbsnp_vcf: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/Homo_sapiens_assembly38.dbsnp138.vcf
   calling_interval_list: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/wgs_calling_regions.hg38.interval_list
   evaluation_interval_list: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/wgs_evaluation_regions.hg38.interval_list
   coverage_interval_list: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/wgs_coverage_regions.hg38.interval_list
-  sequence_grouping: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/sequence_grouping.txt
   str_table_file: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/GRCh38_no_alt_analysis_set_GCA_000001405.15.str_table.tsv
   contamination_sites: /data/zusers/ramirezc/testing/MOHD-DACC-WGS-Pipeline/resources/1000g.phase3.100k.b38.vcf.gz.dat
 
 platform: Illumina
 compression_level: 2
-unmap_contaminant_reads: true
 lod_threshold: -20.0
 cross_check_fingerprints_by: READGROUP
 contamination_underestimation_factor: 0.75
-bin_base_qualities: true
-somatic: false
 scatter_interval_list:
   scatter_count: 50
   break_bands_at_multiples_of: 1000000
