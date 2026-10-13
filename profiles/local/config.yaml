@@ -47,7 +47,7 @@ set-threads:
   collect_variant_calling_metrics: 2
 
 set-resources:              # tune from benchmarks/ TSVs after a real run
-  dragen_index: {mem_mb: 500000}
+  dragen_index: {mem_mb: 128000}
   compose_str_table: {mem_mb: 16000}
   unmapped_bam: {mem_mb: 48000}
   collect_quality_yield_metrics: {mem_mb: 4000}

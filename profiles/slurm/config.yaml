@@ -50,7 +50,7 @@ set-threads:
 
 set-resources:              # tune from benchmarks/ TSVs after a real run
   dragen_index:
-    mem_mb: 500000 * attempt
+    mem_mb: 128000 * attempt
     constraint: cascadelake
   compose_str_table:
     mem_mb: 16000 * attempt
