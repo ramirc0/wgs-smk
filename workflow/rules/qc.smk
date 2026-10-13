@@ -3,15 +3,16 @@
 
 rule collect_quality_yield_metrics:
     input:
-        f"{OUTDIR}/{{sample}}/unmapped_bam/{{sample}}.bam",
+        ubams=f"{OUTDIR}/{{sample}}/unmapped_bam",
+        bam=f"{OUTDIR}/{{sample}}/unmapped_bam/{{read_group}}.bam",
     output:
-        f"{OUTDIR}/{{sample}}/collect_quality_yield_metrics/{{sample}}.metrics",
+        f"{OUTDIR}/{{sample}}/collect_quality_yield_metrics/{{read_group}}.metrics",
     params:
         java=java_options(),
     log:
-        f"{LOGDIR}/collect_quality_yield_metrics/{{sample}}.txt",
+        f"{LOGDIR}/collect_quality_yield_metrics/{{sample}}.{{read_group}}.txt",
     benchmark:
-        f"{BENCHDIR}/collect_quality_yield_metrics/{{sample}}.tsv",
+        f"{BENCHDIR}/collect_quality_yield_metrics/{{sample}}.{{read_group}}.tsv",
     software:
         SOFTWARE_ENV
     shell:
@@ -21,7 +22,7 @@ rule collect_quality_yield_metrics:
         picard \
             {params.java:q} \
             CollectQualityYieldMetrics \
-            -INPUT {input:q} \
+            -INPUT {input.bam:q} \
             -OQ true \
             -OUTPUT {output:q}
         """
@@ -29,17 +30,26 @@ rule collect_quality_yield_metrics:
 
 rule collect_unsorted_readgroup_bam_quality_metrics:
     input:
-        f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{sample}}.bam",
+        lambda w: aligned_read_groups(w.sample)[w.read_group],
     output:
-        insert_size_metrics=f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_metrics",
-        insert_size_histogram=f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.insert_size_histogram.pdf",
+        multiext(
+            f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{read_group}}",
+            ".base_distribution_by_cycle.pdf",
+            ".base_distribution_by_cycle_metrics",
+            ".insert_size_histogram.pdf",
+            ".insert_size_metrics",
+            ".quality_by_cycle.pdf",
+            ".quality_by_cycle_metrics",
+            ".quality_distribution.pdf",
+            ".quality_distribution_metrics",
+        ),
     params:
         java=java_options(),
-        prefix=f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}",
+        prefix=f"{OUTDIR}/{{sample}}/collect_unsorted_readgroup_bam_quality_metrics/{{read_group}}",
     log:
-        f"{LOGDIR}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.txt",
+        f"{LOGDIR}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.{{read_group}}.txt",
     benchmark:
-        f"{BENCHDIR}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.tsv",
+        f"{BENCHDIR}/collect_unsorted_readgroup_bam_quality_metrics/{{sample}}.{{read_group}}.tsv",
     software:
         SOFTWARE_ENV
     shell:
@@ -59,6 +69,10 @@ rule collect_unsorted_readgroup_bam_quality_metrics:
             -PROGRAM QualityScoreDistribution \
             -METRIC_ACCUMULATION_LEVEL null \
             -METRIC_ACCUMULATION_LEVEL ALL_READS
+
+        # Without enough pairs CollectInsertSizeMetrics writes nothing. WARP
+        # touches both files too.
+        touch {params.prefix:q}.insert_size_metrics {params.prefix:q}.insert_size_histogram.pdf
         """
 
 

@@ -20,6 +20,9 @@ compression_level: 2
 lod_threshold: -20.0
 cross_check_fingerprints_by: READGROUP
 contamination_underestimation_factor: 0.75
+split_large_read_group:
+  cutoff_gib: 20.0
+  reads_per_file: 48000000
 scatter_interval_list:
   scatter_count: 50
   break_bands_at_multiples_of: 1000000

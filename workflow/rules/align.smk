@@ -1,15 +1,21 @@
-# FASTQs to a duplicate-marked, coordinate-sorted BAM.
+# FASTQs to per read group uBAMs, then a duplicate-marked, coordinate-sorted BAM.
 
 
-rule unmapped_bam:
+# One uBAM per read group, `<flowcell>.<lane>`. A large one is also split into
+# `<read group>/shard_<n>.bam`, aligned per shard and gathered.
+checkpoint unmapped_bam:
     input:
         r1=lambda w: R1_OF[w.sample],
         r2=lambda w: R2_OF[w.sample],
     output:
-        f"{OUTDIR}/{{sample}}/unmapped_bam/{{sample}}.bam",
+        directory(f"{OUTDIR}/{{sample}}/unmapped_bam"),
     params:
         platform=lambda w: config.get("platform", "Generic"),
-        java=java_options(),
+        compression_level=lambda w: config.get("compression_level", 2),
+        cutoff_gib=lambda w: config["split_large_read_group"]["cutoff_gib"],
+        reads_per_file=lambda w: config["split_large_read_group"]["reads_per_file"],
+        # Per FastqToSam. One runs per thread.
+        java=java_options(heap_mb=8000),
     log:
         f"{LOGDIR}/unmapped_bam/{{sample}}.txt",
     benchmark:
@@ -23,11 +29,15 @@ rule unmapped_bam:
         python {workflow.basedir:q}/scripts/unmapped_bam.py \
             --java-options="{params.java}" \
             --tmp-dir "${{TMPDIR:-/tmp}}" \
+            --jobs {threads:q} \
             --sample {wildcards.sample:q} \
             --platform {params.platform:q} \
             --r1 {input.r1:q} \
             --r2 {input.r2:q} \
-            --output {output:q}
+            --cutoff-gib {params.cutoff_gib:q} \
+            --reads-per-file {params.reads_per_file:q} \
+            --compression-level {params.compression_level:q} \
+            --outdir {output:q}
         """
 
 
@@ -35,16 +45,17 @@ rule unmapped_bam_to_aligned:
     input:
         **REFERENCE,
         dragen_reference=DRAGEN_REFERENCE,
-        bam=f"{OUTDIR}/{{sample}}/unmapped_bam/{{sample}}.bam",
+        ubams=f"{OUTDIR}/{{sample}}/unmapped_bam",
+        bam=f"{OUTDIR}/{{sample}}/unmapped_bam/{{unit}}.bam",
     output:
-        f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{sample}}.bam",
+        f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{unit}}.bam",
     params:
         compression_level=lambda w: config.get("compression_level", 2),
         java=java_options(heap_mb=8000),
     log:
-        f"{LOGDIR}/unmapped_bam_to_aligned/{{sample}}.txt",
+        f"{LOGDIR}/unmapped_bam_to_aligned/{{sample}}.{{unit}}.txt",
     benchmark:
-        f"{BENCHDIR}/unmapped_bam_to_aligned/{{sample}}.tsv",
+        f"{BENCHDIR}/unmapped_bam_to_aligned/{{sample}}.{{unit}}.tsv",
     software:
         SOFTWARE_ENV
     shell:
@@ -92,13 +103,47 @@ rule unmapped_bam_to_aligned:
         """
 
 
+rule gather_unsorted_bam_files:
+    input:
+        lambda w: expand(
+            f"{OUTDIR}/{w.sample}/unmapped_bam_to_aligned/{w.read_group}/{{shard}}.bam",
+            shard=read_groups(w.sample)[w.read_group],
+        ),
+    output:
+        f"{OUTDIR}/{{sample}}/gather_unsorted_bam_files/{{read_group}}.bam",
+    params:
+        bams=lambda w, input: repeat_flag("-INPUT", input),
+        compression_level=lambda w: config.get("compression_level", 2),
+        java=java_options(),
+    log:
+        f"{LOGDIR}/gather_unsorted_bam_files/{{sample}}.{{read_group}}.txt",
+    benchmark:
+        f"{BENCHDIR}/gather_unsorted_bam_files/{{sample}}.{{read_group}}.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        picard \
+            {params.java:q} \
+            -Dsamjdk.compression_level={params.compression_level:q} \
+            GatherBamFiles \
+            {params.bams:q} \
+            -OUTPUT {output:q} \
+            -CREATE_INDEX false \
+            -CREATE_MD5_FILE false
+        """
+
+
 rule mark_duplicates:
     input:
-        f"{OUTDIR}/{{sample}}/unmapped_bam_to_aligned/{{sample}}.bam",
+        lambda w: aligned_read_groups(w.sample).values(),
     output:
         bam=f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.bam",
         metrics=f"{OUTDIR}/{{sample}}/mark_duplicates/{{sample}}.metrics",
     params:
+        bams=lambda w, input: repeat_flag("-INPUT", input),
         compression_level=lambda w: config.get("compression_level", 2),
         # Tile, x and y are fields 5-7. Picard's default parser takes only 5- or
         # 7-field names, and MOHD's carry the UMI as an 8th.
@@ -119,7 +164,7 @@ rule mark_duplicates:
             -Dsamjdk.compression_level={params.compression_level:q} \
             MarkDuplicates \
             -TMP_DIR "${{TMPDIR:-/tmp}}" \
-            -INPUT {input:q} \
+            {params.bams:q} \
             -OUTPUT {output.bam:q} \
             -METRICS_FILE {output.metrics:q} \
             -VALIDATION_STRINGENCY SILENT \

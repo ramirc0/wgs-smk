@@ -22,9 +22,13 @@ numpydoc = ">=1.11.0,<2"
 [feature.lint.tasks]
 lint = "ruff check && ruff format --check && numpydoc lint workflow/scripts/*.py"
 
+[feature.test]
+channels = ["conda-forge", "bioconda"]
+
 [feature.test.dependencies]
 python = "3.13.*"
 pytest = ">=8"
+mawk = "==1.3.4"
 
 [feature.test.tasks]
 test = "pytest"

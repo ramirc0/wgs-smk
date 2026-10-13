@@ -88,6 +88,8 @@ if not SAMPLES:
 
 wildcard_constraints:
     sample=r"[A-Za-z0-9][A-Za-z0-9_.-]*",
+    read_group=r"[A-Za-z0-9][A-Za-z0-9_.-]*",
+    unit=r"[A-Za-z0-9][A-Za-z0-9_.-]*(/shard_[0-9]+)?",
     scatter=r"\d+",
     kind=r"coverage|evaluation",
 
@@ -134,3 +136,50 @@ def java_options(heap_mb=None):
         ]
 
     return options
+
+
+def read_groups(sample):
+    """Map each read group of a sample to its uBAM shards.
+
+    Only input functions may call it: it waits for the `unmapped_bam`
+    checkpoint.
+
+    Parameters
+    ----------
+    sample : str
+        Sample ID.
+
+    Returns
+    -------
+    dict of str to list of str
+        Read group ID to its shard names. Empty for an unsplit read group.
+    """
+    ubams = Path(checkpoints.unmapped_bam.get(sample=sample).output[0])
+    return {
+        bam.stem: sorted(shard.stem for shard in (ubams / bam.stem).glob("*.bam"))
+        for bam in sorted(ubams.glob("*.bam"))
+    }
+
+
+def aligned_read_groups(sample):
+    """Map each read group of a sample to its aligned, unsorted BAM.
+
+    Only input functions may call it, as `read_groups`.
+
+    Parameters
+    ----------
+    sample : str
+        Sample ID.
+
+    Returns
+    -------
+    dict of str to str
+        Read group ID to the BAM: the gathered shards for a split read group,
+        else the read group's own alignment.
+    """
+    return {
+        rg: f"{OUTDIR}/{sample}/gather_unsorted_bam_files/{rg}.bam"
+        if shards
+        else f"{OUTDIR}/{sample}/unmapped_bam_to_aligned/{rg}.bam"
+        for rg, shards in read_groups(sample).items()
+    }

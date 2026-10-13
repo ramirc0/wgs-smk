@@ -9,6 +9,8 @@ bcftools = "==1.24"
 dragmap = "==1.3.0"
 gatk4-main = "==4.7.0.0"
 htslib = "==1.24"
+# 5x faster than gawk at routing reads by read group.
+mawk = "==1.3.4"
 openjdk = "17.*"
 picard = "==3.5.0"
 r-base = "4.5.*"
