@@ -1,0 +1,6 @@
+[package]
+name = "gatk4-main"
+version = "4.7.0.0"
+
+[package.build]
+backend = { name = "pixi-build-rattler-build", version = "*" }

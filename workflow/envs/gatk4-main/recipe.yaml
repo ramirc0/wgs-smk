@@ -1,0 +1,30 @@
+# bioconda's gatk4-main (recipes/gatk4, build_main.sh) with openjdk >=17 in
+# place of =17. GATK's build accepts Java 17 or later and tests only 17.
+context:
+  version: 4.7.0.0
+
+package:
+  name: gatk4-main
+  version: ${{ version }}
+
+source:
+  url: https://github.com/broadinstitute/gatk/releases/download/${{ version }}/gatk-${{ version }}.zip
+  sha256: d093d2693b1626361a413ca59d6d4a0bf968717f280a8fd9ce060b25eb2ed1db
+
+build:
+  number: 0
+  script:
+    - export PACKAGE_HOME=$PREFIX/share/gatk4-main-${{ version }}
+    - install -Dm755 gatk $PACKAGE_HOME/gatk
+    - install -Dm644 gatk-package-${{ version }}-local.jar $PACKAGE_HOME/gatk-package-${{ version }}-local.jar
+    - mkdir -p $PREFIX/bin
+    - ln -s $PACKAGE_HOME/gatk $PREFIX/bin/gatk
+
+requirements:
+  run:
+    - openjdk >=17
+    - python
+
+tests:
+  - script:
+      - gatk HaplotypeCaller --help
