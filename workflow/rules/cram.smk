@@ -28,6 +28,8 @@ rule convert_to_cram:
             -o {output.cram:q} \
             {input.bam:q}
         md5sum {output.cram:q} | awk '{{print $1}}' > {output.cram_md5:q}
+
+        sync {output:q}
         """
 
 
@@ -55,6 +57,8 @@ rule check_prevalidation:
             --duplication-value {output.duplication_value:q} \
             --chimerism-value {output.chimerism_value:q} \
             --is-outlier-data {output.is_outlier_data:q}
+
+        sync {output:q}
         """
 
 
@@ -92,4 +96,6 @@ rule validate_sam_file:
             -MODE VERBOSE \
             -SKIP_MATE_VALIDATION "$(cat {input.is_outlier_data:q})" \
             -IS_BISULFITE_SEQUENCED false
+
+        sync {output:q}
         """

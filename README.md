@@ -281,6 +281,9 @@ and [Snakemake's best practices](https://snakemake.readthedocs.io/en/stable/snak
 - Java rules take their JVM options from `java_options()` in `common.smk`.
 - Rules tee logs to file and terminal (`exec &> >(tee {log:q})`).
 - Every rule has `log:` and `benchmark:`. Each names its pixi env in `software:`.
+- Shell blocks end with `sync {output:q}`. On a shared filesystem, Snakemake's
+  first stat of an output from the submit host otherwise waits for the
+  writing node to flush it.
 - Docstrings follow numpydoc. Neither ruff nor `numpydoc lint` parses `.smk` files.
 
 ## Citations

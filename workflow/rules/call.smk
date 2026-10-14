@@ -29,6 +29,8 @@ rule calibrate_dragen_str_model:
             -str {input.str_table:q} \
             -O {output:q} \
             --threads {threads:q}
+
+        sync {output:q}
         """
 
 
@@ -77,6 +79,8 @@ rule haplotype_caller:
             -GQB 80 \
             -GQB 90 \
             -ERC GVCF
+
+        sync {output:q}
         """
 
 
@@ -109,6 +113,8 @@ rule dragen_hardfilter_gvcf:
             --filter-expression "QUAL < 10.4139" \
             --filter-name "DRAGENHardQUAL" \
             -O {output.gvcf:q}
+
+        sync {output:q}
         """
 
 
@@ -144,6 +150,8 @@ rule merge_gvcfs:
             -CREATE_INDEX false \
             -OUTPUT {output.gvcf:q}
         tabix -p vcf {output.gvcf:q}
+
+        sync {output:q}
         """
 
 
@@ -177,6 +185,8 @@ rule reblock:
             -GQB 40 \
             --add-site-filters-to-genotype \
             -O {output:q}
+
+        sync {output:q}
         """
 
 
@@ -211,4 +221,6 @@ rule validate_gvcf:
             --dbsnp {input.dbsnp:q} \
             --no-overlaps
         touch {output:q}
+
+        sync {output:q}
         """

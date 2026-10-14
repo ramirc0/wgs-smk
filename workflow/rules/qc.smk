@@ -25,6 +25,8 @@ rule collect_quality_yield_metrics:
             -INPUT {params.bam:q} \
             -OQ true \
             -OUTPUT {output:q}
+
+        sync {output:q}
         """
 
 
@@ -73,6 +75,8 @@ rule collect_unsorted_readgroup_bam_quality_metrics:
         # Without enough pairs CollectInsertSizeMetrics writes nothing. WARP
         # touches both files too.
         touch {params.prefix:q}.insert_size_metrics {params.prefix:q}.insert_size_histogram.pdf
+
+        sync {output:q}
         """
 
 
@@ -110,6 +114,8 @@ rule cross_check_fingerprints:
             -INPUT {input.bam:q} \
             -LOD_THRESHOLD {params.lod_threshold:q} \
             -CROSSCHECK_BY {params.cross_check_fingerprints_by:q}
+
+        sync {output:q}
         """
 
 
@@ -142,6 +148,8 @@ rule check_contamination:
             --reference {input.fasta:q} \
             --svd-prefix {params.contamination_sites:q} \
             --underestimation-factor {params.contamination_underestimation_factor:q}
+
+        sync {output:q}
         """
 
 
@@ -179,6 +187,8 @@ rule collect_readgroup_bam_quality_metrics:
             -PROGRAM CollectGcBiasMetrics \
             -METRIC_ACCUMULATION_LEVEL null \
             -METRIC_ACCUMULATION_LEVEL READ_GROUP
+
+        sync {output:q}
         """
 
 
@@ -229,6 +239,8 @@ rule collect_aggregation_metrics:
             -METRIC_ACCUMULATION_LEVEL null \
             -METRIC_ACCUMULATION_LEVEL SAMPLE \
             -METRIC_ACCUMULATION_LEVEL LIBRARY
+
+        sync {output:q}
         """
 
 
@@ -262,6 +274,8 @@ rule collect_wgs_metrics:
             -OUTPUT {output:q} \
             -USE_FAST_ALGORITHM true \
             -READ_LENGTH 250
+
+        sync {output:q}
         """
 
 
@@ -295,6 +309,8 @@ rule collect_raw_wgs_metrics:
             -OUTPUT {output:q} \
             -USE_FAST_ALGORITHM true \
             -READ_LENGTH 250
+
+        sync {output:q}
         """
 
 
@@ -320,6 +336,8 @@ rule calculate_readgroup_checksum:
             CalculateReadGroupChecksum \
             -INPUT {input:q} \
             -OUTPUT {output:q}
+
+        sync {output:q}
         """
 
 
@@ -355,4 +373,6 @@ rule collect_variant_calling_metrics:
             -SEQUENCE_DICTIONARY {input.fasta_dict:q} \
             -TARGET_INTERVALS {input.evaluation_interval_list:q} \
             -GVCF_INPUT true
+
+        sync {output:q}
         """

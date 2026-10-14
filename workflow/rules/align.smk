@@ -38,6 +38,8 @@ rule unmapped_bam:
             --reads-per-file {params.reads_per_file:q} \
             --compression-level {params.compression_level:q} \
             --outdir {output:q}
+
+        sync {output:q}
         """
 
 
@@ -58,6 +60,8 @@ checkpoint read_groups:
         exec &> >(tee {log:q})
 
         cp {input:q}/read_groups.tsv {output:q}
+
+        sync {output:q}
         """
 
 
@@ -120,6 +124,8 @@ rule unmapped_bam_to_aligned:
             -ALIGNER_PROPER_PAIR_FLAGS true \
             -UNMAP_CONTAMINANT_READS true \
             -ADD_PG_TAG_TO_READS false
+
+        sync {output:q}
         """
 
 
@@ -153,6 +159,8 @@ rule gather_unsorted_bam_files:
             -OUTPUT {output:q} \
             -CREATE_INDEX false \
             -CREATE_MD5_FILE false
+
+        sync {output:q}
         """
 
 
@@ -193,6 +201,8 @@ rule mark_duplicates:
             -ASSUME_SORT_ORDER "queryname" \
             -CLEAR_DT "false" \
             -ADD_PG_TAG_TO_READS false
+
+        sync {output:q}
         """
 
 
@@ -216,4 +226,6 @@ rule sort_bam:
         samtools sort -@ {threads:q} -m 2G -o {output.bam:q} {input:q}
         samtools index {output.bam:q}
         md5sum {output.bam:q} > {output.md5:q}
+
+        sync {output:q}
         """

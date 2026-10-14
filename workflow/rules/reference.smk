@@ -22,6 +22,8 @@ rule reference_index:
 
         samtools faidx {input:q}
         samtools dict {input:q} -o {output.fasta_dict:q}
+
+        sync {output:q}
         """
 
 
@@ -46,6 +48,8 @@ rule dragen_index:
             --build-hash-table true \
             --ht-reference {input.fasta:q} \
             --output-directory {output:q}
+
+        sync {output:q}
         """
 
 
@@ -70,6 +74,8 @@ rule compose_str_table:
             ComposeSTRTableFile \
             -R {input.fasta:q} \
             -O {output:q}
+
+        sync {output:q}
         """
 
 
@@ -93,6 +99,8 @@ rule prepare_dbsnp:
 
         bcftools reheader -f {input.fasta_index:q} -o {output.vcf:q} {input.vcf:q}
         tabix -p vcf {output.vcf:q}
+
+        sync {output:q}
         """
 
 
@@ -115,6 +123,8 @@ rule reheader_interval_list:
         exec &> >(tee {log:q})
 
         {{ cat {input.fasta_dict:q}; grep -v '^@' {input.interval_list:q}; }} > {output:q}
+
+        sync {output:q}
         """
 
 
@@ -149,4 +159,6 @@ rule scatter_interval_list:
             --break-bands-at-multiples-of {params.break_bands_at_multiples_of:q} \
             --interval-list {input:q} \
             --outdir {params.outdir:q}
+
+        sync {output:q}
         """
