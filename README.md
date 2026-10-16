@@ -173,7 +173,9 @@ Calling, in `call.smk`:
 - `haplotype_caller` calls each scatter in DRAGEN mode with contamination 0.
 - `dragen_hardfilter_gvcf` flags `QUAL < 10.4139` as `DRAGENHardQUAL`.
 - `merge_gvcfs` gathers the scatters by block copy.
-- `reblock` runs ReblockGVCF.
+- `reblock_contig` runs ReblockGVCF on one contig of the calling regions. No
+  gVCF record spans two contigs, so the pieces equal one whole-genome run.
+- `reblock` gathers the contigs by block copy.
 - `validate_gvcf` runs ValidateVariants and touches `<sample>.OK`.
 
 QC, in `qc.smk`:
@@ -222,6 +224,7 @@ needs them. WARP keeps the same set without the BAM and the DRAGstr model.
 | `haplotype_caller/` | Per-scatter gVCFs (temporary) |
 | `dragen_hardfilter_gvcf/` | Hard-filtered per-scatter gVCFs (temporary) |
 | `merge_gvcfs/` | Gathered gVCF (temporary) |
+| `reblock_contig/` | Reblocked gVCF per contig (temporary) |
 | `reblock/` | Reblocked gVCF (`.rb.g.vcf.gz`), ready for joint genotyping |
 | `validate_gvcf/` | `<sample>.OK` once ValidateVariants passes |
 | `collect_variant_calling_metrics/` | Variant calling detail and summary metrics |

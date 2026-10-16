@@ -39,6 +39,13 @@ SCATTERED_INTERVAL_LIST = (
     "/{scatter}scattered.interval_list"
 )
 
+# Contigs of the calling regions, in dictionary order. Reblock runs per contig:
+# no gVCF record spans two, so the gathered output equals a whole-genome run.
+with open(REFS["calling_interval_list"]) as _f:
+    CALLING_CONTIGS = list(
+        dict.fromkeys(line.split("\t", 1)[0] for line in _f if not line.startswith("@"))
+    )
+
 # The workspace path is relative to the rule file. Every rule file sits in rules/.
 SOFTWARE_ENV = pixi(workspace="../envs", env=config["pixi_env"], locked=True)
 

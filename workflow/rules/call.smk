@@ -155,14 +155,55 @@ rule merge_gvcfs:
         """
 
 
-rule reblock:
+rule reblock_contig:
     input:
         **REFERENCE,
         gvcf=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz",
         tbi=f"{OUTDIR}/{{sample}}/merge_gvcfs/{{sample}}.merged.g.vcf.gz.tbi",
     output:
-        f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz",
+        gvcf=temp(f"{OUTDIR}/{{sample}}/reblock_contig/{{contig}}.rb.g.vcf.gz"),
+        tbi=temp(f"{OUTDIR}/{{sample}}/reblock_contig/{{contig}}.rb.g.vcf.gz.tbi"),
     params:
+        java=java_options(),
+    log:
+        f"{LOGDIR}/reblock_contig/{{sample}}.{{contig}}.txt",
+    benchmark:
+        f"{BENCHDIR}/reblock_contig/{{sample}}.{{contig}}.tsv",
+    software:
+        SOFTWARE_ENV
+    shell:
+        r"""
+        exec &> >(tee {log:q})
+
+        gatk --java-options "{params.java}" \
+            ReblockGVCF \
+            -R {input.fasta:q} \
+            -V {input.gvcf:q} \
+            -L {wildcards.contig:q} \
+            -do-qual-approx \
+            --floor-blocks \
+            -GQB 20 \
+            -GQB 30 \
+            -GQB 40 \
+            --add-site-filters-to-genotype \
+            -O {output.gvcf:q}
+
+        sync {output:q}
+        """
+
+
+rule reblock:
+    input:
+        expand(
+            f"{OUTDIR}/{{sample}}/reblock_contig/{{contig}}.rb.g.vcf.gz",
+            contig=CALLING_CONTIGS,
+            allow_missing=True,
+        ),
+    output:
+        gvcf=f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz",
+        tbi=f"{OUTDIR}/{{sample}}/reblock/{{sample}}.rb.g.vcf.gz.tbi",
+    params:
+        gvcfs=lambda w, input: repeat_flag("-INPUT", input),
         java=java_options(),
     log:
         f"{LOGDIR}/reblock/{{sample}}.txt",
@@ -174,17 +215,13 @@ rule reblock:
         r"""
         exec &> >(tee {log:q})
 
-        gatk --java-options "{params.java}" \
-            ReblockGVCF \
-            -R {input.fasta:q} \
-            -V {input.gvcf:q} \
-            -do-qual-approx \
-            --floor-blocks \
-            -GQB 20 \
-            -GQB 30 \
-            -GQB 40 \
-            --add-site-filters-to-genotype \
-            -O {output:q}
+        picard \
+            {params.java:q} \
+            GatherVcfs \
+            {params.gvcfs:q} \
+            -CREATE_INDEX false \
+            -OUTPUT {output.gvcf:q}
+        tabix -p vcf {output.gvcf:q}
 
         sync {output:q}
         """
