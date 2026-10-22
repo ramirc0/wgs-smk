@@ -140,14 +140,17 @@ def java_options(heap_mb=None):
     Returns
     -------
     callable
-        Maps the job's wildcards and resources to the options, as a list.
-        Interpolate it with `:q`, or bare inside a double-quoted string.
+        Maps the job's wildcards, threads and resources to the options, as a
+        list. Interpolate it with `:q`, or bare inside a double-quoted string.
     """
 
-    def options(wildcards, resources):
+    def options(wildcards, threads, resources):
         heap = heap_mb or int(resources.mem_mb * 0.8)
         return [
             f"-Xmx{heap}m",
+            # A JVM sizes its GC threads to the CPUs it sees, the whole host on
+            # a local run. With ~170 of them, G1 lost remembered-set entries.
+            f"-XX:ActiveProcessorCount={threads}",
             f"-Djava.io.tmpdir={JAVA_TMP_DIR}",
             f"-Dorg.xerial.snappy.tempdir={JAVA_TMP_DIR}",
         ]
