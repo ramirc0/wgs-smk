@@ -21,7 +21,8 @@ default-resources:          # reference_index uses these as they are
   runtime: 240m
   mem_mb: 4000 * attempt
   # z1061 has ~200 GiB of /tmp. unmapped_bam routes a 30x genome there uncompressed.
-  slurm_extra: "--exclude=z[1024,1061,1062,1068] --cpu-freq=High-High:Performance"
+  # z1076 cannot read /data.
+  slurm_extra: "--exclude=z[1024,1061,1062,1068,1076] --cpu-freq=High-High:Performance"
 
 set-threads:
   dragen_index: 52
