@@ -10,6 +10,7 @@ import argparse
 import csv
 import os
 import shlex
+import signal
 import subprocess
 import sys
 import tempfile
@@ -193,7 +194,7 @@ def convert(args, fastq_dir, rg, barcode, pairs):
         "-SORT_ORDER",
         "queryname",
         "-TMP_DIR",
-        args.tmp_dir,
+        fastq_dir,
         # 10x the default: fewer, larger spills.
         "-MAX_RECORDS_IN_RAM",
         "5000000",
@@ -228,6 +229,9 @@ def main(argv=None):
         Command-line arguments. Defaults to `sys.argv[1:]`.
     """
     args = build_parser().parse_args(argv)
+    # SLURM ends a timed-out or cancelled job with SIGTERM. Unwind through the
+    # with block so the ~300 GB of temp FASTQs go too.
+    signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
     Path(args.outdir).mkdir(parents=True)
     with tempfile.TemporaryDirectory(dir=args.tmp_dir) as fastq_dir:
         read_groups = route(args.r1, args.r2, fastq_dir)

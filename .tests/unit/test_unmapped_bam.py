@@ -1,7 +1,11 @@
-"""Tests for unmapped_bam.py read group routing."""
+"""Tests for unmapped_bam.py."""
 
 import gzip
+import os
+import signal
 import subprocess
+import sys
+import time
 
 import pytest
 import unmapped_bam
@@ -55,3 +59,31 @@ def test_route_rejects_other_name_shapes(tmp_path):
     out.mkdir()
     with pytest.raises(subprocess.CalledProcessError):
         unmapped_bam.route(*write_pair(tmp_path, [("A:B:C:D:E:F", "1")]), str(out))
+
+
+def test_sigterm_removes_the_temp_dir(tmp_path):
+    fastq = tmp_path / "stalled.fastq.gz"
+    os.mkfifo(fastq)
+    # gzip opens its input non-blocking. A held writer that never writes makes
+    # it wait instead of reading EOF.
+    writer = os.open(fastq, os.O_RDWR)
+    tmp = tmp_path / "tmp"
+    tmp.mkdir()
+    flags = "--jobs 1 --sample S --platform P --cutoff-gib 1 --reads-per-file 1"
+    proc = subprocess.Popen(
+        [sys.executable, unmapped_bam.__file__, "--java-options=", *flags.split()]
+        + ["--compression-level", "1", "--tmp-dir", str(tmp)]
+        + ["--r1", str(fastq), "--r2", str(fastq), "--outdir", str(tmp_path / "out")],
+        start_new_session=True,
+    )
+    try:
+        deadline = time.monotonic() + 10
+        while not list(tmp.glob("*/R2.fifo")):
+            assert time.monotonic() < deadline
+            time.sleep(0.05)
+        # SLURM signals every process of a timed-out or cancelled job.
+        os.killpg(proc.pid, signal.SIGTERM)
+        assert proc.wait(timeout=10) != 0
+        assert list(tmp.iterdir()) == []
+    finally:
+        os.close(writer)
