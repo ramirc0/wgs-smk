@@ -16,9 +16,6 @@ rule unmapped_bam:
         reads_per_file=lambda w: config["split_large_read_group"]["reads_per_file"],
         # Per FastqToSam. One runs per thread.
         java=java_options(heap_mb=8000),
-        # ~300 GB of uncompressed FASTQ per sample. Not job /tmp: nodes report no
-        # TmpDisk, so SLURM would pack enough of these onto one node to fill it.
-        tmp_dir=f"{OUTDIR}/tmp",
     log:
         f"{LOGDIR}/unmapped_bam/{{sample}}.txt",
     benchmark:
@@ -29,10 +26,11 @@ rule unmapped_bam:
         r"""
         exec &> >(tee {log:q})
 
-        mkdir -p {params.tmp_dir:q}
+        # ~70 GB of gzipped FASTQ per sample. Nodes report no TmpDisk, so SLURM
+        # packs 20 of these on a node by memory. That fits its 5.4+ TiB /tmp.
         python {workflow.basedir:q}/scripts/unmapped_bam.py \
             --java-options="{params.java}" \
-            --tmp-dir {params.tmp_dir:q} \
+            --tmp-dir "${{TMPDIR:-/tmp}}" \
             --jobs {threads:q} \
             --sample {wildcards.sample:q} \
             --platform {params.platform:q} \
