@@ -18,10 +18,12 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Input: one tab-joined R1 record and R2 record per line. Writes each pair to
-# <dir>/<flowcell>.<lane>_R{1,2}.fastq. A read group's barcode is the most
+# <dir>/<flowcell>.<lane>_R{1,2}.fastq.gz. A read group's barcode is the most
 # common last field of the R1 comment among its first 100,000 pairs, because
 # any one read can carry a no-call. Prints one line per read group: ID,
 # barcode, pairs.
+# gzip -1 shrinks MOHD reads 4.8x but runs at half of mawk's output rate per
+# read end. pigz -p 2 keeps up.
 ROUTE = r"""
 {
     words = split($1, word, " ")
@@ -31,14 +33,24 @@ ROUTE = r"""
         exit 1
     }
     rg = field[3] "." field[4]
+    if (!(rg in r1)) {
+        r1[rg] = "pigz -1 -p 2 > '" dir "/" rg "_R1.fastq.gz'"
+        r2[rg] = "pigz -1 -p 2 > '" dir "/" rg "_R2.fastq.gz'"
+    }
     if (++pairs[rg] <= 100000 && words > 1) {
         n = split(word[2], comment, ":")
         seen[rg SUBSEP comment[n]]++
     }
-    print $1 "\n" $2 "\n" $3 "\n" $4 > (dir "/" rg "_R1.fastq")
-    print $5 "\n" $6 "\n" $7 "\n" $8 > (dir "/" rg "_R2.fastq")
+    print $1 "\n" $2 "\n" $3 "\n" $4 | r1[rg]
+    print $5 "\n" $6 "\n" $7 "\n" $8 | r2[rg]
 }
 END {
+    for (rg in r1) {
+        if (close(r1[rg]) || close(r2[rg])) {
+            print "pigz failed for read group " rg > "/dev/stderr"
+            exit 1
+        }
+    }
     for (key in seen) {
         split(key, k, SUBSEP)
         if (seen[key] > top[k[1]] || (seen[key] == top[k[1]] && k[2] < barcode[k[1]])) {
@@ -89,7 +101,7 @@ def route(r1, r2, fastq_dir):
         Gzipped R1 and R2 FASTQs. Every read name MUST hold 7 (Casava 1.8) or
         8 (with a UMI) colon-separated fields.
     fastq_dir : str
-        Directory for the `<read group>_R1.fastq` and `_R2.fastq` files.
+        Directory for the `<read group>_R1.fastq.gz` and `_R2.fastq.gz` files.
 
     Returns
     -------
@@ -170,7 +182,7 @@ def convert(args, fastq_dir, rg, barcode, pairs):
     list of str
         Names of the shards, without `.bam`. Empty if the uBAM is not split.
     """
-    fastqs = [Path(fastq_dir, f"{rg}_R{end}.fastq") for end in (1, 2)]
+    fastqs = [Path(fastq_dir, f"{rg}_R{end}.fastq.gz") for end in (1, 2)]
     ubam = Path(args.outdir, f"{rg}.bam")
     picard(
         args.java_options,
@@ -229,8 +241,8 @@ def main(argv=None):
         Command-line arguments. Defaults to `sys.argv[1:]`.
     """
     args = build_parser().parse_args(argv)
-    # SLURM ends a timed-out or cancelled job with SIGTERM. Unwind through the
-    # with block so the ~300 GB of temp FASTQs go too.
+    # A timed-out or cancelled job gets SIGTERM. Unwind through the with block
+    # so the temp FASTQs go too.
     signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum))
     Path(args.outdir).mkdir(parents=True)
     with tempfile.TemporaryDirectory(dir=args.tmp_dir) as fastq_dir:

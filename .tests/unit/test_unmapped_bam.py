@@ -38,7 +38,8 @@ def test_route_splits_7_and_8_field_names_by_flowcell_and_lane(tmp_path):
         "HKGGNBGXY.2": ("1", 1),
         "23CWFWLT4.3": ("GTACTCGTGA+CACTTGAGAA", 2),
     }
-    r2 = (out / "23CWFWLT4.3_R2.fastq").read_text().splitlines()
+    with gzip.open(out / "23CWFWLT4.3_R2.fastq.gz", "rt") as f:
+        r2 = f.read().splitlines()
     assert r2[::4] == [f"@{READS[i][0]} 2:N:0:{READS[i][1]}" for i in (1, 3)]
 
 
@@ -59,6 +60,14 @@ def test_route_rejects_other_name_shapes(tmp_path):
     out.mkdir()
     with pytest.raises(subprocess.CalledProcessError):
         unmapped_bam.route(*write_pair(tmp_path, [("A:B:C:D:E:F", "1")]), str(out))
+
+
+def test_route_fails_when_a_read_group_fastq_cannot_be_written(tmp_path):
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "23CWFWLT4.3_R2.fastq.gz").mkdir()
+    with pytest.raises(subprocess.CalledProcessError):
+        unmapped_bam.route(*write_pair(tmp_path, READS), str(out))
 
 
 def test_sigterm_removes_the_temp_dir(tmp_path):

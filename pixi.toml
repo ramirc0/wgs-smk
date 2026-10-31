@@ -29,6 +29,7 @@ channels = ["conda-forge", "bioconda"]
 python = "3.13.*"
 pytest = ">=8"
 mawk = "==1.3.4"
+pigz = "==2.8"
 
 [feature.test.tasks]
 test = "pytest"
