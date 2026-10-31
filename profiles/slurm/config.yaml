@@ -10,10 +10,6 @@ max-jobs-per-timespan: 5/1s
 # With unlimited jobs every ready job is submitted, so ILP's per-batch solve buys
 # nothing. Greedy starts big-input jobs first, so give a small blocking rule `priority:`.
 scheduler: greedy
-# Nodes report no TmpDisk, so SLURM cannot keep unmapped_bam's ~300 GB of /tmp
-# per sample off a full node. Cap them cluster-wide. Also bounds uBAMs in flight.
-resources:
-  - unmapped_bam_slots=24
 
 slurm-efficiency-report: true
 slurm-efficiency-report-path: logs/efficiency
@@ -24,7 +20,7 @@ default-resources:          # reference_index uses these as they are
   slurm_partition: 4hours
   runtime: 240m
   mem_mb: 4000 * attempt
-  # z1061 has ~200 GiB of /tmp. unmapped_bam routes a 30x genome there uncompressed.
+  # z1061 has ~200 GiB of /tmp, which sort and MarkDuplicates spills can fill.
   # z1076 cannot read /data.
   slurm_extra: "--exclude=z[1024,1061,1062,1068,1076] --cpu-freq=High-High:Performance"
 
@@ -65,7 +61,9 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   compose_str_table:
     mem_mb: 16000 * attempt
   unmapped_bam:
-    unmapped_bam_slots: 1
+    # ~300 GB of uncompressed FASTQ per sample. Nodes report no TmpDisk, so SLURM
+    # would pack enough of these onto one node to fill its /tmp.
+    tmpdir: /data/zusers/ramirezc/tmp/wgs-smk
     mem_mb: 48000 * attempt
     slurm_partition: 12hours
     runtime: 720m
