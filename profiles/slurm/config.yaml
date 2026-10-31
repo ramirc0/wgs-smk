@@ -61,9 +61,6 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   compose_str_table:
     mem_mb: 16000 * attempt
   unmapped_bam:
-    # ~300 GB of uncompressed FASTQ per sample. Nodes report no TmpDisk, so SLURM
-    # would pack enough of these onto one node to fill its /tmp.
-    tmpdir: /data/zusers/ramirezc/tmp/wgs-smk
     mem_mb: 48000 * attempt
     slurm_partition: 12hours
     runtime: 720m
