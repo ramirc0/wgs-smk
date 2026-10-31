@@ -13,7 +13,7 @@ scheduler: greedy
 # Nodes report no TmpDisk, so SLURM cannot keep unmapped_bam's ~300 GB of /tmp
 # per sample off a full node. Cap them cluster-wide. Also bounds uBAMs in flight.
 resources:
-  - unmapped_bam_slots=8
+  - unmapped_bam_slots=24
 
 slurm-efficiency-report: true
 slurm-efficiency-report-path: logs/efficiency
