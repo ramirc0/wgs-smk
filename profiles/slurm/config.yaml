@@ -10,6 +10,10 @@ max-jobs-per-timespan: 5/1s
 # With unlimited jobs every ready job is submitted, so ILP's per-batch solve buys
 # nothing. Greedy starts big-input jobs first, so give a small blocking rule `priority:`.
 scheduler: greedy
+# Nodes report no TmpDisk, so SLURM cannot keep unmapped_bam's ~300 GB of /tmp
+# per sample off a full node. Cap them cluster-wide. Also bounds uBAMs in flight.
+resources:
+  - unmapped_bam_slots=8
 
 slurm-efficiency-report: true
 slurm-efficiency-report-path: logs/efficiency
@@ -61,6 +65,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
   compose_str_table:
     mem_mb: 16000 * attempt
   unmapped_bam:
+    unmapped_bam_slots: 1
     mem_mb: 48000 * attempt
     slurm_partition: 12hours
     runtime: 720m
