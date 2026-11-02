@@ -64,15 +64,16 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     mem_mb: 16000 * attempt
   unmapped_bam:
     mem_mb: 48000 * attempt
-    slurm_partition: 12hours
-    runtime: 720m
+    # The largest MOHD samples ran past 12 h on full nodes.
+    slurm_partition: 5days
+    runtime: 1440m
     constraint: cascadelake
   collect_quality_yield_metrics:
     mem_mb: 4000 * attempt
     constraint: cascadelake
   unmapped_bam_to_aligned:
     mem_mb: 72000 * attempt
-    slurm_partition: 12hours
+    slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   gather_unsorted_bam_files:
@@ -83,7 +84,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     constraint: cascadelake
   mark_duplicates:
     mem_mb: 32000 * attempt
-    slurm_partition: 12hours
+    slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   sort_bam:                 # samtools sort -m 2G: at least 2 GB per thread
@@ -100,7 +101,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     constraint: cascadelake
   collect_aggregation_metrics:
     mem_mb: 8000 * attempt
-    slurm_partition: 12hours
+    slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   calculate_readgroup_checksum:
@@ -108,12 +109,12 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     constraint: cascadelake
   collect_wgs_metrics:
     mem_mb: 8000 * attempt
-    slurm_partition: 12hours
+    slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   collect_raw_wgs_metrics:
     mem_mb: 8000 * attempt
-    slurm_partition: 12hours
+    slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   convert_to_cram:
@@ -125,7 +126,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     runtime: 30m
   validate_sam_file:
     mem_mb: 16000 * attempt
-    slurm_partition: 12hours
+    slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   calibrate_dragen_str_model:
@@ -141,7 +142,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     constraint: cascadelake
   dragen_hardfilter_gvcf:
     mem_mb: 4000 * attempt
-    slurm_partition: 12hours
+    slurm_partition: 12hours,5days
     runtime: 720m
   merge_gvcfs:
     mem_mb: 4000 * attempt
