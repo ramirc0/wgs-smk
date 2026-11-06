@@ -10,6 +10,10 @@ max-jobs-per-timespan: 5/1s
 # With unlimited jobs every ready job is submitted, so ILP's per-batch solve buys
 # nothing. Greedy starts big-input jobs first, so give a small blocking rule `priority:`.
 scheduler: greedy
+# BAM streaming from /data is bandwidth-bound. At ~290 at once on MOHD, sorts kept
+# 1 of 16 cores busy and timed out, and /data dropped writes twice.
+resources:
+  - data_io=150
 
 slurm-efficiency-report: true
 slurm-efficiency-report-path: logs/efficiency
@@ -72,23 +76,31 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     mem_mb: 4000 * attempt
     constraint: cascadelake
   unmapped_bam_to_aligned:
+    data_io: 1
     mem_mb: 72000 * attempt
     slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   gather_unsorted_bam_files:
+    data_io: 1
     mem_mb: 4000 * attempt
+    slurm_partition: 12hours,5days
+    runtime: 720m
     constraint: cascadelake
   collect_unsorted_readgroup_bam_quality_metrics:
     mem_mb: 8000 * attempt
     constraint: cascadelake
   mark_duplicates:
+    data_io: 1
     mem_mb: 32000 * attempt
     slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
   sort_bam:                 # samtools sort -m 2G: at least 2 GB per thread
+    data_io: 1
     mem_mb: 40000 * attempt
+    slurm_partition: 12hours,5days
+    runtime: 720m
     constraint: cascadelake
   cross_check_fingerprints:
     mem_mb: 4000 * attempt
