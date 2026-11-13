@@ -124,8 +124,8 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
-  collect_raw_wgs_metrics:
-    mem_mb: 8000 * attempt
+  collect_raw_wgs_metrics:  # deep MOHD samples ran out of heap at 8 and 16 GB
+    mem_mb: 32000 * attempt
     slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
