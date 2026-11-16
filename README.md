@@ -276,7 +276,7 @@ flowcell and lane, set the read group.
 pixi shell                                         # launcher env
 snakemake -n -p --profile profiles/local           # dry run
 snakemake --profile profiles/local                 # local
-snakemake --profile profiles/slurm                 # SLURM
+pixi run slurm <run_id>                            # SLURM, sets run_id
 ```
 
 The SLURM profile holds Weng Lab cluster settings, such as partitions, excluded

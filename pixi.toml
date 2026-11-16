@@ -18,6 +18,11 @@ snakemake-software-deployment-plugin-pixi = { git = "https://github.com/cademirc
 snakemake-executor-plugin-slurm = { git = "https://github.com/snakemake/snakemake-executor-plugin-slurm.git", rev = "8c2af56eb7dd1e0b78866691d6981f1d8327e0db" }
 snakemake-executor-plugin-slurm-jobstep = "==0.6.1"
 
+# Targets must precede --config, so they ride in the second argument, not after `--`.
+[tasks.slurm]
+args = ["run_id", { arg = "snakemake_args", default = "" }]
+cmd = "snakemake {{ snakemake_args }} --profile profiles/slurm --slurm-jobname-prefix {{ run_id }} --config run_id={{ run_id }}"
+
 [feature.lint.dependencies]
 ruff = ">=0.17,<0.18"
 numpydoc = ">=1.11.0,<2"
