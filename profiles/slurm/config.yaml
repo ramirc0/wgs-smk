@@ -10,7 +10,7 @@ max-jobs-per-timespan: 5/1s
 # With unlimited jobs every ready job is submitted, so ILP's per-batch solve buys
 # nothing. Greedy starts big-input jobs first, so give a small blocking rule `priority:`.
 scheduler: greedy
-# BAM streaming from /data is bandwidth-bound. At ~290 at once on MOHD, sorts kept
+# BAM streaming from /data is bandwidth-bound. At ~290 at once, sorts kept
 # 1 of 16 cores busy and timed out, and /data dropped writes twice.
 resources:
   - data_io=150
@@ -68,7 +68,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     mem_mb: 16000 * attempt
   unmapped_bam:
     mem_mb: 48000 * attempt
-    # The largest MOHD samples ran past 12 h on full nodes.
+    # The largest samples ran past 12 h on full nodes.
     slurm_partition: 5days
     runtime: 1440m
     constraint: cascadelake
@@ -124,7 +124,7 @@ set-resources:              # tune from benchmarks/ TSVs after a real run
     slurm_partition: 12hours,5days
     runtime: 720m
     constraint: cascadelake
-  collect_raw_wgs_metrics:  # deep MOHD samples ran out of heap at 8 and 16 GB
+  collect_raw_wgs_metrics:  # deep samples ran out of heap at 8 and 16 GB
     mem_mb: 32000 * attempt
     slurm_partition: 12hours,5days
     runtime: 720m

@@ -22,7 +22,7 @@ from pathlib import Path
 # common last field of the R1 comment among its first 100,000 pairs, because
 # any one read can carry a no-call. Prints one line per read group: ID,
 # barcode, pairs.
-# gzip -1 shrinks MOHD reads 4.8x but runs at half of mawk's output rate per
+# gzip -1 shrinks the reads 4.8x but runs at half of mawk's output rate per
 # read end. pigz -p 2 keeps up.
 ROUTE = r"""
 {

@@ -310,4 +310,4 @@ Zhang, Fan, Matthew Flickinger, Sarah A. Gagliano Taliun, et al. 2020. “Ancest
 
 ## Questions
 
-If you have any questions or would like to provide constructive feedback, please open an issue or reach out to the MOHD DACC.
+If you have any questions or would like to provide constructive feedback, please open an issue.

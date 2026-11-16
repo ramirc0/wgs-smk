@@ -176,7 +176,7 @@ rule mark_duplicates:
         bams=lambda w, input: repeat_flag("-INPUT", input),
         compression_level=lambda w: config.get("compression_level", 2),
         # Tile, x and y are fields 5-7. Picard's default parser takes only 5- or
-        # 7-field names, and MOHD's carry the UMI as an 8th.
+        # 7-field names, and some carry the UMI as an 8th.
         read_name_regex=lambda w: r"(?:[^:]*:){4}([0-9]+):([0-9]+):([0-9]+)(?::[^:]*)?",
         java=java_options(),
     log:
